@@ -7,7 +7,6 @@
     position: sticky;
     top: 0;
     z-index: 1000;
-    height: 70px;
 }
 
 .admin-navbar-container {
@@ -18,7 +17,7 @@
     margin: 0 auto;
     padding: 0 24px;
     width: 100%;
-    height: 100%;
+    height: 70px;
 }
 
 
@@ -34,14 +33,11 @@
     padding: 10px;
     margin-right: 15px;
     transition: all 0.3s;
-    width: 45px;
-    height: 45px;
-    border-radius: 8px;
-    flex-shrink: 0;
 }
 
 .mobile-menu-toggle:hover {
     background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
 }
 
 
@@ -71,19 +67,16 @@
 .admin-logo-icon {
     font-size: 1.8rem;
     background: rgba(52, 152, 219, 0.2);
-    width: 45px;
-    height: 45px;
+    width: 40px;
+    height: 40px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
 }
 
 .admin-logo-text {
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 
@@ -170,7 +163,6 @@
     background: rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     transition: background-color 0.3s;
-    flex-shrink: 0;
 }
 
 .admin-user-info:hover {
@@ -190,22 +182,17 @@
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
-    flex-shrink: 0;
 }
 
 .user-details {
     display: flex;
     flex-direction: column;
-    min-width: 0;
 }
 
 .user-name {
     font-weight: 600;
     font-size: 0.95rem;
     line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .user-role {
@@ -223,7 +210,6 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-shrink: 0;
 }
 
 .view-site-btn,
@@ -240,7 +226,6 @@
     transition: all 0.3s ease;
     text-decoration: none;
     white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .view-site-btn {
@@ -446,36 +431,15 @@
 
 /* Responsive Design */
 
-@media (max-width: 1200px) {
-    /* Tablet adjustments */
-    .admin-navbar-container {
-        padding: 0 20px;
-    }
-    .admin-logo-text {
-        font-size: 1.2rem;
-    }
-    .nav-label {
-        font-size: 0.9rem;
-    }
-    .admin-nav-link {
-        padding: 10px 14px;
-    }
-    .user-name {
-        font-size: 0.9rem;
-    }
-    .view-site-btn,
-    .logout-btn {
-        padding: 8px 14px;
-        font-size: 0.9rem;
-    }
-}
-
 @media (max-width: 992px) {
     /* Hide desktop elements on tablet/mobile */
     .admin-navbar-menu.desktop-menu,
     .admin-user-info.desktop-user-info,
     .admin-actions.desktop-actions {
         display: none;
+    }
+    .admin-logo-icon {
+        visibility: hidden;
     }
     /* Show mobile elements */
     .mobile-menu-toggle,
@@ -484,148 +448,49 @@
     }
     .admin-navbar-container {
         padding: 0 16px;
-        height: 70px;
     }
     .admin-logo-text {
-        font-size: 1.1rem;
+        visibility: hidden;
     }
     .admin-navbar-right {
         gap: 15px;
     }
     .mobile-user-avatar .user-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 1.4rem;
-    }
-    .admin-logo-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.6rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .admin-navbar-container {
-        padding: 0 14px;
-        height: 65px;
-    }
-    .admin-logo-text {
-        font-size: 1rem;
-        max-width: 180px;
-    }
-    .admin-logo-icon {
-        width: 38px;
-        height: 38px;
-        font-size: 1.5rem;
-    }
-    .mobile-menu-toggle {
-        font-size: 1.6rem;
-        padding: 8px;
-        margin-right: 10px;
-        width: 42px;
-        height: 42px;
-    }
-    .mobile-user-avatar .user-avatar {
-        width: 38px;
-        height: 38px;
+        width: 35px;
+        height: 35px;
         font-size: 1.3rem;
     }
 }
 
 @media (max-width: 576px) {
+    .user-avatar {
+        visibility: hidden;
+    }
     .admin-navbar-container {
         padding: 0 12px;
         height: 60px;
     }
-    .admin-logo-text {
-        font-size: 0.95rem;
-        max-width: 150px;
-    }
     .admin-logo-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 1.4rem;
+        visibility: hidden;
+    }
+    .admin-logo-text {
+        font-size: 1rem;
     }
     .mobile-menu-toggle {
         font-size: 1.5rem;
-        padding: 6px;
-        margin-right: 8px;
-        width: 40px;
-        height: 40px;
-    }
-    .mobile-user-avatar .user-avatar {
-        width: 36px;
-        height: 36px;
-        font-size: 1.2rem;
+        padding: 8px;
+        margin-right: 10px;
     }
     .mobile-dropdown-menu {
         top: 60px;
     }
-    .mobile-menu-overlay {
-        top: 60px;
-    }
-    .mobile-nav-link {
-        padding: 16px 20px;
-        font-size: 1rem;
-    }
-    .mobile-nav-icon {
-        font-size: 1.3rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .admin-navbar-container {
-        padding: 0 10px;
-    }
-    .admin-logo-text {
-        font-size: 0.9rem;
-        max-width: 120px;
-    }
-    .admin-logo-icon {
-        width: 34px;
-        height: 34px;
-        font-size: 1.3rem;
-    }
-    .mobile-menu-toggle {
-        font-size: 1.4rem;
-        padding: 5px;
-        margin-right: 6px;
-        width: 38px;
-        height: 38px;
-    }
     .mobile-user-avatar .user-avatar {
-        width: 34px;
-        height: 34px;
-        font-size: 1.1rem;
-    }
-    .admin-navbar-brand {
-        margin-right: 10px;
-    }
-}
-
-@media (max-width: 380px) {
-    .admin-logo-text {
-        font-size: 0.85rem;
-        max-width: 100px;
-    }
-    .admin-logo-icon {
         width: 32px;
         height: 32px;
         font-size: 1.2rem;
     }
-    .mobile-menu-toggle {
-        font-size: 1.3rem;
-        width: 36px;
-        height: 36px;
-    }
-    .mobile-user-avatar .user-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
-    }
-    .mobile-nav-link {
-        padding: 14px 18px;
-        font-size: 0.95rem;
+    .mobile-menu-overlay {
+        top: 60px;
     }
 }
 
