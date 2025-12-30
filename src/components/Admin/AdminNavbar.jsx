@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import "./AdminNavbar.css"; // Make sure this file exists
 
 const AdminNavbar = () => {
   const location = useLocation();
@@ -23,6 +24,7 @@ const AdminNavbar = () => {
   return (
     <nav className="admin-navbar">
       <div className="admin-navbar-container">
+        {/* Brand/Logo */}
         <div className="admin-navbar-brand">
           <Link to="/admin" className="admin-logo">
             <span className="admin-logo-icon">👑</span>
@@ -30,6 +32,7 @@ const AdminNavbar = () => {
           </Link>
         </div>
 
+        {/* Navigation Menu */}
         <div className="admin-navbar-menu">
           <ul className="admin-nav-links">
             {navItems.map((item) => (
@@ -37,6 +40,7 @@ const AdminNavbar = () => {
                 <Link
                   to={item.path}
                   className={`admin-nav-link ${isActive(item.path)}`}
+                  title={item.label}
                 >
                   <span className="nav-icon">{item.icon}</span>
                   <span className="nav-label">{item.label}</span>
@@ -46,20 +50,28 @@ const AdminNavbar = () => {
           </ul>
         </div>
 
-        <div className="admin-navbar-user">
-          <div className="user-info">
-            <span className="user-avatar">{user?.avatar || "👤"}</span>
+        {/* User Section - Right Side */}
+        <div className="admin-navbar-right">
+          {/* User Info */}
+          <div className="admin-user-info">
+            <div className="user-avatar-container">
+              <span className="user-avatar">{user?.avatar || "👤"}</span>
+            </div>
             <div className="user-details">
-              <span className="user-name">{user?.name || "Admin"}</span>
-              <span className="user-role">{user?.role || "Admin"}</span>
+              <div className="user-name">{user?.name || "Admin User"}</div>
+              <div className="user-role">{user?.role || "Admin"}</div>
             </div>
           </div>
+
+          {/* Actions */}
           <div className="admin-actions">
-            <Link to="/" className="view-site-btn">
-              👁️ View Site
+            <Link to="/" className="view-site-btn" title="View Public Site">
+              <span className="action-icon">👁️</span>
+              <span className="action-text">View Site</span>
             </Link>
-            <button onClick={logout} className="logout-btn">
-              🚪 Logout
+            <button onClick={logout} className="logout-btn" title="Logout">
+              <span className="action-icon">🚪</span>
+              <span className="action-text">Logout</span>
             </button>
           </div>
         </div>
