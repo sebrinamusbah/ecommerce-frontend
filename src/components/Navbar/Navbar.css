@@ -1,0 +1,237 @@
+/* Navbar Container */
+
+.navbar {
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px 20px;
+}
+
+
+/* Logo Styles */
+
+.navbar-logo a {
+    text-decoration: none;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.navbar-logo a:hover {
+    color: #3498db;
+}
+
+
+/* Desktop Navigation */
+
+.navbar-menu.desktop-menu {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-links {
+    display: flex;
+    list-style: none;
+    gap: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-item {
+    position: relative;
+}
+
+.navbar-link {
+    text-decoration: none;
+    color: #34495e;
+    font-weight: 500;
+    font-size: 1rem;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.navbar-link:hover {
+    color: #3498db;
+    background-color: #f8f9fa;
+}
+
+
+/* Cart Count Badge */
+
+.cart-count,
+.mobile-cart-count {
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.mobile-cart-count {
+    margin-left: 8px;
+}
+
+
+/* Mobile Menu Button */
+
+.navbar-mobile-menu {
+    display: none;
+}
+
+.mobile-menu-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #34495e;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.mobile-menu-btn:hover {
+    background-color: #f8f9fa;
+    color: #3498db;
+}
+
+
+/* Mobile Dropdown Menu */
+
+.mobile-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    z-index: 999;
+}
+
+.mobile-dropdown-menu.open {
+    max-height: 300px;
+}
+
+.mobile-nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mobile-nav-item {
+    border-bottom: 1px solid #eee;
+}
+
+.mobile-nav-item:last-child {
+    border-bottom: none;
+}
+
+.mobile-nav-link {
+    display: block;
+    padding: 15px 20px;
+    text-decoration: none;
+    color: #34495e;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mobile-nav-link:hover {
+    background-color: #f8f9fa;
+    color: #3498db;
+    padding-left: 25px;
+}
+
+
+/* Active Link Styles */
+
+.navbar-link.active,
+.mobile-nav-link.active {
+    color: #3498db;
+    background-color: #ebf5fb;
+    font-weight: 600;
+}
+
+
+/* Responsive Design */
+
+@media (max-width: 768px) {
+    .navbar-menu.desktop-menu {
+        display: none;
+    }
+    .navbar-mobile-menu {
+        display: block;
+    }
+    .navbar-container {
+        padding: 10px 20px;
+    }
+    .navbar-logo a {
+        font-size: 1.5rem;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-dropdown-menu {
+        display: none;
+    }
+}
+
+
+/* Add to existing CSS for better animations */
+
+.mobile-nav-link {
+    transform: translateY(-10px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.mobile-dropdown-menu.open .mobile-nav-link {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+
+/* Stagger the animation for each item */
+
+.mobile-dropdown-menu.open .mobile-nav-item:nth-child(1) .mobile-nav-link {
+    transition-delay: 0.1s;
+}
+
+.mobile-dropdown-menu.open .mobile-nav-item:nth-child(2) .mobile-nav-link {
+    transition-delay: 0.15s;
+}
+
+.mobile-dropdown-menu.open .mobile-nav-item:nth-child(3) .mobile-nav-link {
+    transition-delay: 0.2s;
+}
+
+.mobile-dropdown-menu.open .mobile-nav-item:nth-child(4) .mobile-nav-link {
+    transition-delay: 0.25s;
+}
