@@ -1,11 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext"; // Add this import
 import "./Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
+
+  // Use AuthContext
+  const { login } = useAuth();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -17,6 +21,15 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Check for remembered email on component mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem("rememberedEmail");
+    if (rememberedEmail) {
+      setFormData((prev) => ({ ...prev, email: rememberedEmail }));
+      setRememberMe(true);
+    }
+  }, []);
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -53,7 +66,7 @@ const Login = () => {
     return newErrors;
   };
 
-  // Handle form submission
+  // Handle form submission - UPDATED VERSION
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -65,23 +78,38 @@ const Login = () => {
 
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Login attempt:", formData);
-      console.log("Remember me:", rememberMe);
+    try {
+      // Use the AuthContext login function
+      const user = await login(formData.email, formData.password);
 
-      // Simulate successful login
-      alert(`Welcome back! You are now logged in as ${formData.email}`);
+      // Remember me functionality
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", formData.email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
 
-      // Store login state (in real app, use context/Redux)
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userEmail", formData.email);
+      // Success message
+      alert(
+        `Welcome ${
+          user.role === "admin" ? "Admin" : ""
+        }! You are now logged in.`
+      );
 
-      // Redirect to previous page or home
-      navigate(from, { replace: true });
-
+      // Redirect based on user role
+      if (user.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
+    } catch (error) {
+      setErrors({
+        general:
+          "Invalid email or password. Try: test@example.com / password123 or admin@bookstore.com / admin123",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   // Handle social login
@@ -142,12 +170,12 @@ const Login = () => {
             </div>
 
             <div className="test-account">
-              <h4>Test Account:</h4>
+              <h4>Test Accounts:</h4>
               <p>
-                <strong>Email:</strong> test@example.com
+                <strong>Admin:</strong> admin@bookstore.com / admin123
               </p>
               <p>
-                <strong>Password:</strong> password123
+                <strong>User:</strong> test@example.com / password123
               </p>
             </div>
           </div>
@@ -188,6 +216,11 @@ const Login = () => {
 
             {/* Login Form */}
             <form className="login-form" onSubmit={handleSubmit} noValidate>
+              {/* Show general error if exists */}
+              {errors.general && (
+                <div className="general-error">{errors.general}</div>
+              )}
+
               {/* Email Field */}
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
