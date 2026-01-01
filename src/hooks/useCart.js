@@ -1,4 +1,4 @@
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
 
 export const useCart = () => {
@@ -105,13 +105,18 @@ export const useCart = () => {
         }
     }, [clearCart]);
 
-    // Calculate cart total
+    // Calculate cart statistics
     const calculateTotal = useCallback(() => {
         if (!cart || !cart.items || cart.items.length === 0) return 0;
 
         return cart.items.reduce((total, item) => {
-            return total + item.book.price * item.quantity;
+            return total + (item.book ? .price || 0) * (item.quantity || 1);
         }, 0);
+    }, [cart]);
+
+    const getItemCount = useCallback(() => {
+        if (!cart || !cart.items) return 0;
+        return cart.items.reduce((count, item) => count + (item.quantity || 1), 0);
     }, [cart]);
 
     // Fetch cart on mount and when user changes
@@ -129,7 +134,8 @@ export const useCart = () => {
         error,
         cartItems: cart ? .items || [],
         cartTotal: calculateTotal(),
-        itemCount: cart ? .items ? .length || 0,
+        itemCount: getItemCount(),
+        isEmpty: !cart ? .items || cart.items.length === 0,
         fetchCart,
         addItemToCart,
         removeItemFromCart,
