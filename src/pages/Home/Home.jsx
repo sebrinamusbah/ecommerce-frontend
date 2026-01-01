@@ -12,6 +12,31 @@ const Home = () => {
   // Your Render backend URL
   const API_URL = "https://readify-ecommerce-backend-1.onrender.com";
 
+  // HELPER FUNCTIONS - MOVE THEM TO THE TOP
+  const getCategoryColor = (index) => {
+    const colors = [
+      "#3498db",
+      "#2ecc71",
+      "#9b59b6",
+      "#e74c3c",
+      "#f39c12",
+      "#1abc9c",
+    ];
+    return colors[index % colors.length];
+  };
+
+  const getBookImage = (index) => {
+    const colors = ["3498db", "2ecc71", "9b59b6", "e74c3c", "f39c12", "1abc9c"];
+    return `https://via.placeholder.com/150x200/${colors[index]}/ffffff?text=Book`;
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      alert(`Searching for: ${searchQuery}`);
+    }
+  };
+
   // Fetch data from Render backend on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -62,88 +87,17 @@ const Home = () => {
   const popularBooks =
     books.length > 0
       ? books.slice(0, 6).map((book, index) => ({
-          id: book._id || index + 1,
+          id: book._id || book.id || index + 1,
           title: book.title || "Sample Book",
           author: book.author || "Unknown Author",
           price: book.price || 9.99,
           rating: book.rating || 4.0 + Math.random() * 0.9,
+          // IMPORTANT: Use book.coverImage (not book.image or book.coverImageUrl)
           image: book.coverImage || getBookImage(index),
         }))
       : [
-          {
-            id: 1,
-            title: "The Great Gatsby",
-            author: "F. Scott Fitzgerald",
-            price: 12.99,
-            rating: 4.5,
-            image: "https://via.placeholder.com/150x200/3498db/ffffff",
-          },
-          {
-            id: 2,
-            title: "To Kill a Mockingbird",
-            author: "Harper Lee",
-            price: 14.99,
-            rating: 4.8,
-            image: "https://via.placeholder.com/150x200/3498db/ffffff",
-          },
-          {
-            id: 3,
-            title: "1984",
-            author: "George Orwell",
-            price: 10.99,
-            rating: 4.7,
-            image: "https://via.placeholder.com/150x200/3498db/ffffff",
-          },
-          {
-            id: 4,
-            title: "Pride and Prejudice",
-            author: "Jane Austen",
-            price: 9.99,
-            rating: 4.6,
-            image: "https://via.placeholder.com/150x200/e74c3c/ffffff",
-          },
-          {
-            id: 5,
-            title: "The Hobbit",
-            author: "J.R.R. Tolkien",
-            price: 15.99,
-            rating: 4.9,
-            image: "https://via.placeholder.com/150x200/f39c12/ffffff",
-          },
-          {
-            id: 6,
-            title: "Moby Dick",
-            author: "Herman Melville",
-            price: 11.99,
-            rating: 4.3,
-            image: "https://via.placeholder.com/150x200/1abc9c/ffffff",
-          },
+          // fallback data...
         ];
-
-  // Helper functions
-  const getCategoryColor = (index) => {
-    const colors = [
-      "#3498db",
-      "#2ecc71",
-      "#9b59b6",
-      "#e74c3c",
-      "#f39c12",
-      "#1abc9c",
-    ];
-    return colors[index % colors.length];
-  };
-
-  const getBookImage = (index) => {
-    const colors = ["3498db", "2ecc71", "9b59b6", "e74c3c", "f39c12", "1abc9c"];
-    return `https://via.placeholder.com/150x200/${colors[index]}/ffffff`;
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      alert(`Searching for: ${searchQuery}`);
-    }
-  };
 
   // Add loading indicator only during initial load
   if (isLoading && books.length === 0) {
@@ -295,10 +249,21 @@ const Home = () => {
                     {"★".repeat(Math.floor(book.rating))}
                     {"☆".repeat(5 - Math.floor(book.rating))}
                     <span className="rating-number">
-                      ({book.rating.toFixed(1)})
+                      {/* FIXED LINE */}
+                      {(typeof book.rating === "number"
+                        ? book.rating
+                        : parseFloat(book.rating) || 0
+                      ).toFixed(1)}
                     </span>
                   </div>
-                  <div className="book-price">${book.price.toFixed(2)}</div>
+                  {/* FIXED LINE */}
+                  <div className="book-price">
+                    $
+                    {(typeof book.price === "number"
+                      ? book.price
+                      : parseFloat(book.price) || 0
+                    ).toFixed(2)}
+                  </div>
                   <button
                     className="add-to-cart-btn"
                     onClick={(e) => {
