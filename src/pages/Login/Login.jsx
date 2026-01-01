@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; // Add this import
+import { useAuth } from "../../context/AuthContext";
 import "./Login.css";
 
 const Login = () => {
@@ -8,10 +8,8 @@ const Login = () => {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
 
-  // Use AuthContext
-  const { login } = useAuth();
+  const { login, error, clearError } = useAuth();
 
-  // Form state
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -22,7 +20,13 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Check for remembered email on component mount
+  // Clear errors when component mounts
+  useEffect(() => {
+    clearError();
+    return () => clearError();
+  }, [clearError]);
+
+  // Check for remembered email
   useEffect(() => {
     const rememberedEmail = localStorage.getItem("rememberedEmail");
     if (rememberedEmail) {
@@ -31,30 +35,28 @@ const Login = () => {
     }
   }, []);
 
-  // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
     });
-    // Clear error for this field
     if (errors[name]) {
       setErrors({
         ...errors,
         [name]: "",
       });
     }
+    clearError();
   };
 
-  // Validate form
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.email) {
+    if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = "Please enter a valid email address";
     }
 
     if (!formData.password) {
@@ -66,7 +68,6 @@ const Login = () => {
     return newErrors;
   };
 
-  // Handle form submission - UPDATED VERSION
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -77,9 +78,9 @@ const Login = () => {
     }
 
     setIsLoading(true);
+    clearError();
 
     try {
-      // Use the AuthContext login function
       const user = await login(formData.email, formData.password);
 
       // Remember me functionality
@@ -89,46 +90,37 @@ const Login = () => {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // Success message
-      alert(
-        `Welcome ${
-          user.role === "admin" ? "Admin" : ""
-        }! You are now logged in.`
-      );
+      // Show success message
+      console.log("Login successful:", user);
 
       // Redirect based on user role
       if (user.role === "admin") {
-        navigate("/admin", { replace: true });
+        navigate("/admin/dashboard", { replace: true });
       } else {
         navigate(from, { replace: true });
       }
-    } catch (error) {
-      setErrors({
-        general:
-          "Invalid email or password. Try: test@example.com / password123 or admin@bookstore.com / admin123",
-      });
+    } catch (err) {
+      // Error is already set in AuthContext, we'll show it in the UI
+      console.error("Login error:", err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle social login
-  const handleSocialLogin = (provider) => {
-    alert(`Redirecting to ${provider} login...`);
-    // In real app: Redirect to OAuth endpoint
-    // window.location.href = `/api/auth/${provider}`;
+  const handleGuestLogin = async () => {
+    // For demo purposes - you can remove this if not needed
+    setFormData({
+      email: "test@example.com",
+      password: "password123",
+    });
   };
 
-  // Handle forgot password
-  const handleForgotPassword = () => {
-    const email = prompt(
-      "Please enter your email address to reset your password:"
-    );
-    if (email && /\S+@\S+\.\S+/.test(email)) {
-      alert(`Password reset instructions have been sent to ${email}`);
-    } else if (email) {
-      alert("Please enter a valid email address");
-    }
+  const handleDemoAdminLogin = async () => {
+    // For demo purposes - you can remove this if not needed
+    setFormData({
+      email: "admin@bookstore.com",
+      password: "admin123",
+    });
   };
 
   return (
@@ -137,46 +129,41 @@ const Login = () => {
         {/* Left Side - Welcome Message */}
         <div className="login-left">
           <div className="welcome-content">
-            <h1 className="welcome-title">Welcome Back</h1>
-            <p className="welcome-subtitle">
-              Sign in to access your personalized book recommendations,
-              wishlist, and order history.
-            </p>
-
-            <div className="features-list">
+            <div className="logo">
+              <h1>Readify</h1>
+              <p className="tagline">Your Online Bookstore</p>
+            </div>
+            <div className="welcome-message">
+              <h2>Welcome Back!</h2>
+              <p>
+                Sign in to access your personalized book recommendations, track
+                your orders, and continue your reading journey.
+              </p>
+            </div>
+            <div className="features">
               <div className="feature-item">
                 <span className="feature-icon">📚</span>
-                <div className="feature-text">
-                  <h3>Personalized Recommendations</h3>
-                  <p>Get book suggestions based on your reading history</p>
-                </div>
+                <span>Access thousands of books</span>
               </div>
-
               <div className="feature-item">
-                <span className="feature-icon">❤️</span>
-                <div className="feature-text">
-                  <h3>Save Your Wishlist</h3>
-                  <p>Keep track of books you want to read later</p>
-                </div>
+                <span className="feature-icon">🚚</span>
+                <span>Fast & free delivery</span>
               </div>
-
               <div className="feature-item">
-                <span className="feature-icon">📦</span>
-                <div className="feature-text">
-                  <h3>Track Your Orders</h3>
-                  <p>Monitor your purchases and delivery status</p>
-                </div>
+                <span className="feature-icon">⭐</span>
+                <span>Personalized recommendations</span>
               </div>
             </div>
-
-            <div className="test-account">
-              <h4>Test Accounts:</h4>
-              <p>
-                <strong>Admin:</strong> admin@bookstore.com / admin123
-              </p>
-              <p>
-                <strong>User:</strong> test@example.com / password123
-              </p>
+            <div className="test-credentials">
+              <p className="test-title">Test Credentials:</p>
+              <div className="credential-box">
+                <p>
+                  <strong>Admin:</strong> admin@bookstore.com / admin123
+                </p>
+                <p>
+                  <strong>User:</strong> test@example.com / password123
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -191,37 +178,21 @@ const Login = () => {
               </p>
             </div>
 
-            {/* Social Login Buttons */}
-            <div className="social-login">
-              <button
-                className="social-btn google-btn"
-                onClick={() => handleSocialLogin("Google")}
-              >
-                <span className="social-icon">🔍</span>
-                Continue with Google
-              </button>
+            {/* Backend Error Display */}
+            {error && (
+              <div className="alert alert-error backend-error">
+                <div className="alert-icon">⚠️</div>
+                <div className="alert-content">
+                  <strong>Login Failed</strong>
+                  <p>{error}</p>
+                </div>
+                <button className="alert-close" onClick={clearError}>
+                  ×
+                </button>
+              </div>
+            )}
 
-              <button
-                className="social-btn facebook-btn"
-                onClick={() => handleSocialLogin("Facebook")}
-              >
-                <span className="social-icon">👥</span>
-                Continue with Facebook
-              </button>
-            </div>
-
-            <div className="divider">
-              <span>or continue with email</span>
-            </div>
-
-            {/* Login Form */}
-            <form className="login-form" onSubmit={handleSubmit} noValidate>
-              {/* Show general error if exists */}
-              {errors.general && (
-                <div className="general-error">{errors.general}</div>
-              )}
-
-              {/* Email Field */}
+            <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
                   Email Address
@@ -235,26 +206,17 @@ const Login = () => {
                   className={`form-input ${errors.email ? "error" : ""}`}
                   placeholder="Enter your email"
                   disabled={isLoading}
+                  autoComplete="email"
                 />
                 {errors.email && (
-                  <div className="error-message">{errors.email}</div>
+                  <span className="error-message">{errors.email}</span>
                 )}
               </div>
 
-              {/* Password Field */}
               <div className="form-group">
-                <div className="password-label-row">
-                  <label htmlFor="password" className="form-label">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    className="show-password-btn"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? "🙈 Hide" : "👁️ Show"}
-                  </button>
-                </div>
+                <label htmlFor="password" className="form-label">
+                  Password
+                </label>
                 <div className="password-input-wrapper">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -265,38 +227,43 @@ const Login = () => {
                     className={`form-input ${errors.password ? "error" : ""}`}
                     placeholder="Enter your password"
                     disabled={isLoading}
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
-                    className="forgot-password-btn"
-                    onClick={handleForgotPassword}
+                    className="password-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
                   >
-                    Forgot?
+                    {showPassword ? "🙈" : "👁️"}
                   </button>
                 </div>
                 {errors.password && (
-                  <div className="error-message">{errors.password}</div>
+                  <span className="error-message">{errors.password}</span>
                 )}
               </div>
 
-              {/* Remember Me & Forgot Password */}
               <div className="form-options">
-                <label className="checkbox-label">
+                <div className="remember-me">
                   <input
                     type="checkbox"
+                    id="rememberMe"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="checkbox-input"
                     disabled={isLoading}
                   />
-                  <span className="checkbox-custom"></span>
-                  Remember me
-                </label>
+                  <label htmlFor="rememberMe">Remember me</label>
+                </div>
+                <Link to="/forgot-password" className="forgot-password">
+                  Forgot password?
+                </Link>
               </div>
 
-              {/* Submit Button */}
-              <button type="submit" className="submit-btn" disabled={isLoading}>
+              <button
+                type="submit"
+                className="login-button"
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
                     <span className="spinner"></span>
@@ -307,31 +274,57 @@ const Login = () => {
                 )}
               </button>
 
-              {/* Register Link */}
+              <div className="demo-buttons">
+                <button
+                  type="button"
+                  className="demo-button guest-button"
+                  onClick={handleGuestLogin}
+                  disabled={isLoading}
+                >
+                  Fill User Credentials
+                </button>
+                <button
+                  type="button"
+                  className="demo-button admin-button"
+                  onClick={handleDemoAdminLogin}
+                  disabled={isLoading}
+                >
+                  Fill Admin Credentials
+                </button>
+              </div>
+
+              <div className="divider">
+                <span>Or</span>
+              </div>
+
+              <div className="social-login">
+                <button
+                  type="button"
+                  className="social-button google-button"
+                  disabled={isLoading}
+                >
+                  <span className="social-icon">G</span>
+                  Continue with Google
+                </button>
+                <button
+                  type="button"
+                  className="social-button facebook-button"
+                  disabled={isLoading}
+                >
+                  <span className="social-icon">f</span>
+                  Continue with Facebook
+                </button>
+              </div>
+
               <div className="register-link">
                 <p>
-                  New to BookStore?{" "}
+                  Don't have an account?{" "}
                   <Link to="/register" className="register-text">
-                    Create an account
+                    Create account
                   </Link>
                 </p>
               </div>
             </form>
-
-            {/* Terms & Privacy */}
-            <div className="terms-privacy">
-              <p>
-                By signing in, you agree to our{" "}
-                <a href="/terms" className="link">
-                  Terms of Service
-                </a>{" "}
-                and{" "}
-                <a href="/privacy" className="link">
-                  Privacy Policy
-                </a>
-                .
-              </p>
-            </div>
           </div>
         </div>
       </div>
