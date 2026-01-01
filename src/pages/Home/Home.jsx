@@ -1,16 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./Home.css";
 
 const Home = () => {
-  // Use useState instead of hooks for now
-  const [featuredCategories, setFeaturedCategories] = useState([]);
-  const [popularBooks, setPopularBooks] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // Mock data - remove later
-  const sampleCategories = [
+  // Sample data for featured categories
+  const featuredCategories = [
     { id: 1, name: "Fiction", count: 150, color: "#3498db" },
     { id: 2, name: "Non-Fiction", count: 120, color: "#2ecc71" },
     { id: 3, name: "Science", count: 85, color: "#9b59b6" },
@@ -19,7 +13,8 @@ const Home = () => {
     { id: 6, name: "Children", count: 110, color: "#1abc9c" },
   ];
 
-  const sampleBooks = [
+  // Sample data for popular books
+  const popularBooks = [
     {
       id: 1,
       title: "The Great Gatsby",
@@ -70,16 +65,7 @@ const Home = () => {
     },
   ];
 
-  // Simulate loading
-  useEffect(() => {
-    setLoading(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      setFeaturedCategories(sampleCategories);
-      setPopularBooks(sampleBooks);
-      setLoading(false);
-    }, 500);
-  }, []);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -87,20 +73,6 @@ const Home = () => {
       alert(`Searching for: ${searchQuery}`);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="home-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading amazing books for you...</p>
-      </div>
-    );
-  }
-
-  // ... rest of your original JSX code (keep everything the same)
-  // Just change the data sources:
-  // featuredCategories → featuredCategories
-  // popularBooks → popularBooks
 
   return (
     <div className="home-page">
