@@ -1,9 +1,10 @@
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
 
 export const useOrders = () => {
     const { user, createOrder, getOrders, getOrderById } = useAuth();
     const [orders, setOrders] = useState([]);
+    const [selectedOrder, setSelectedOrder] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -54,6 +55,7 @@ export const useOrders = () => {
             setError(null);
             try {
                 const data = await getOrderById(orderId);
+                setSelectedOrder(data);
                 return data;
             } catch (err) {
                 setError(err.message);
@@ -64,6 +66,18 @@ export const useOrders = () => {
         }, [getOrderById]
     );
 
+    const getOrderStatusSummary = useCallback(() => {
+        const summary = {
+            total: orders.length,
+            pending: orders.filter((o) => o.status === "pending").length,
+            processing: orders.filter((o) => o.status === "processing").length,
+            shipped: orders.filter((o) => o.status === "shipped").length,
+            delivered: orders.filter((o) => o.status === "delivered").length,
+            cancelled: orders.filter((o) => o.status === "cancelled").length,
+        };
+        return summary;
+    }, [orders]);
+
     // Fetch orders on mount
     useEffect(() => {
         if (user) {
@@ -73,11 +87,14 @@ export const useOrders = () => {
 
     return {
         orders,
+        selectedOrder,
         loading,
         error,
+        orderSummary: getOrderStatusSummary(),
         fetchOrders,
         placeOrder,
         fetchOrderById,
+        clearSelectedOrder: () => setSelectedOrder(null),
         refetchOrders: fetchOrders,
     };
 };
