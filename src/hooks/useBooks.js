@@ -51,8 +51,8 @@ export const useBooks = () => {
                 const filtered = data.filter(
                     (book) =>
                     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    book.author ? .toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    book.description ? .toLowerCase().includes(searchTerm.toLowerCase())
+                    book.author?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    book.description?.toLowerCase().includes(searchTerm.toLowerCase())
                 );
                 setBooks(filtered);
                 return filtered;

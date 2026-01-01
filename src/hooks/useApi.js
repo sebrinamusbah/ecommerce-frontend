@@ -22,7 +22,7 @@ export const useApi = (initialState = null) => {
                 return response.data;
             } catch (err) {
                 const errorMessage =
-                    err.response ? .data ? .message || err.message || "Something went wrong";
+                    err.response?.data?.message || err.message || "Something went wrong";
                 setError(errorMessage);
                 throw new Error(errorMessage);
             } finally {

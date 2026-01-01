@@ -1,4 +1,4 @@
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "?.?./context/AuthContext";
 import { useState, useEffect, useCallback } from "react";
 
 export const useCart = () => {
@@ -28,7 +28,7 @@ export const useCart = () => {
             setCart(data);
             return data;
         } catch (err) {
-            setError(err.message);
+            setError(err ??.message);
             throw err;
         } finally {
             setLoading(false);
@@ -48,7 +48,7 @@ export const useCart = () => {
                 await fetchCart(); // Refresh cart
                 return data;
             } catch (err) {
-                setError(err.message);
+                setError(err ??.message);
                 throw err;
             } finally {
                 setLoading(false);
@@ -65,7 +65,7 @@ export const useCart = () => {
                 await fetchCart(); // Refresh cart
                 return data;
             } catch (err) {
-                setError(err.message);
+                setError(err ??.message);
                 throw err;
             } finally {
                 setLoading(false);
@@ -82,7 +82,7 @@ export const useCart = () => {
                 await fetchCart(); // Refresh cart
                 return data;
             } catch (err) {
-                setError(err.message);
+                setError(err ??.message);
                 throw err;
             } finally {
                 setLoading(false);
@@ -98,7 +98,7 @@ export const useCart = () => {
             setCart(null);
             return data;
         } catch (err) {
-            setError(err.message);
+            setError(err ??.message);
             throw err;
         } finally {
             setLoading(false);
@@ -107,16 +107,19 @@ export const useCart = () => {
 
     // Calculate cart statistics
     const calculateTotal = useCallback(() => {
-        if (!cart || !cart.items || cart.items.length === 0) return 0;
+        if (!cart || !cart ??.items || cart ??.items ??.length === 0) return 0;
 
-        return cart.items.reduce((total, item) => {
-            return total + (item.book ? .price || 0) * (item.quantity || 1);
+        return cart ??.items ??.reduce((total, item) => {
+            return total + (item ??.book ??.price || 0) * (item ??.quantity || 1);
         }, 0);
     }, [cart]);
 
     const getItemCount = useCallback(() => {
-        if (!cart || !cart.items) return 0;
-        return cart.items.reduce((count, item) => count + (item.quantity || 1), 0);
+        if (!cart || !cart ??.items) return 0;
+        return cart ??.items ??.reduce(
+            (count, item) => count + (item ??.quantity || 1),
+            0
+        );
     }, [cart]);
 
     // Fetch cart on mount and when user changes
@@ -132,10 +135,10 @@ export const useCart = () => {
         cart,
         loading,
         error,
-        cartItems: cart ? .items || [],
+        cartItems: cart ??.items || [],
         cartTotal: calculateTotal(),
         itemCount: getItemCount(),
-        isEmpty: !cart ? .items || cart.items.length === 0,
+        isEmpty: !cart ??.items || cart ??.items ??.length === 0,
         fetchCart,
         addItemToCart,
         removeItemFromCart,
