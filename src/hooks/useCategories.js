@@ -1,4 +1,4 @@
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
 
 export const useCategories = () => {
@@ -22,6 +22,12 @@ export const useCategories = () => {
         }
     }, [getCategories]);
 
+    const getCategoryById = useCallback(
+        (categoryId) => {
+            return categories.find((category) => category._id === categoryId);
+        }, [categories]
+    );
+
     // Fetch categories on mount
     useEffect(() => {
         fetchCategories();
@@ -32,6 +38,7 @@ export const useCategories = () => {
         loading,
         error,
         fetchCategories,
+        getCategoryById,
         refetchCategories: fetchCategories,
     };
 };
