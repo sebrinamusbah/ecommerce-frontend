@@ -1,103 +1,64 @@
-import { useAuth } from "../context/AuthContext";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { bookService } from "../services";
 
 export const useBooks = () => {
-    const { getBooks, getBookById } = useAuth();
     const [books, setBooks] = useState([]);
-    const [selectedBook, setSelectedBook] = useState(null);
+    const [featuredBooks, setFeaturedBooks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const fetchBooks = useCallback(
-        async(params = {}) => {
+    const fetchBooks = useCallback(async(params = {}) => {
+        try {
             setLoading(true);
             setError(null);
-            try {
-                const data = await getBooks();
-                setBooks(data);
-                return data;
-            } catch (err) {
-                setError(err.message);
-                throw err;
-            } finally {
-                setLoading(false);
+            const result = await bookService.getAllBooks(params);
+            if (result.success) {
+                setBooks(result.data);
             }
-        }, [getBooks]
-    );
+        } catch (err) {
+            setError(err.error || "Failed to fetch books");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    const fetchBookById = useCallback(
-        async(id) => {
+    const fetchFeaturedBooks = useCallback(async() => {
+        try {
             setLoading(true);
             setError(null);
-            try {
-                const data = await getBookById(id);
-                setSelectedBook(data);
-                return data;
-            } catch (err) {
-                setError(err.message);
-                throw err;
-            } finally {
-                setLoading(false);
+            const result = await bookService.getFeaturedBooks();
+            if (result.success) {
+                setFeaturedBooks(result.data);
             }
-        }, [getBookById]
-    );
+        } catch (err) {
+            setError(err.error || "Failed to fetch featured books");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    const searchBooks = useCallback(
-        async(searchTerm) => {
+    const searchBooks = useCallback(async(query) => {
+        try {
             setLoading(true);
             setError(null);
-            try {
-                const data = await getBooks();
-                const filtered = data.filter(
-                    (book) =>
-                    book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    book.author?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    book.description?.toLowerCase().includes(searchTerm.toLowerCase())
-                );
-                setBooks(filtered);
-                return filtered;
-            } catch (err) {
-                setError(err.message);
-                throw err;
-            } finally {
-                setLoading(false);
+            const result = await bookService.searchBooks(query);
+            if (result.success) {
+                setBooks(result.data);
             }
-        }, [getBooks]
-    );
-
-    const filterBooksByCategory = useCallback(
-        async(categoryId) => {
-            setLoading(true);
-            setError(null);
-            try {
-                const data = await getBooks();
-                const filtered = data.filter((book) => book.category === categoryId);
-                setBooks(filtered);
-                return filtered;
-            } catch (err) {
-                setError(err.message);
-                throw err;
-            } finally {
-                setLoading(false);
-            }
-        }, [getBooks]
-    );
-
-    // Fetch books on mount
-    useEffect(() => {
-        fetchBooks();
-    }, [fetchBooks]);
+        } catch (err) {
+            setError(err.error || "Search failed");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     return {
         books,
-        selectedBook,
+        featuredBooks,
         loading,
         error,
         fetchBooks,
-        fetchBookById,
+        fetchFeaturedBooks,
         searchBooks,
-        filterBooksByCategory,
-        clearSelectedBook: () => setSelectedBook(null),
-        refetchBooks: fetchBooks,
     };
 };

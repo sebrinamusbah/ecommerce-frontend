@@ -1,44 +1,42 @@
-import { useAuth } from "../context/AuthContext";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { categoryService } from "../services";
 
 export const useCategories = () => {
-    const { getCategories } = useAuth();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     const fetchCategories = useCallback(async() => {
-        setLoading(true);
-        setError(null);
         try {
-            const data = await getCategories();
-            setCategories(data);
-            return data;
+            setLoading(true);
+            setError(null);
+            const result = await categoryService.getAllCategories();
+            if (result.success) {
+                setCategories(result.data);
+            }
         } catch (err) {
-            setError(err.message);
-            throw err;
+            setError(err.error || "Failed to fetch categories");
         } finally {
             setLoading(false);
         }
-    }, [getCategories]);
+    }, []);
 
-    const getCategoryById = useCallback(
-        (categoryId) => {
-            return categories.find((category) => category._id === categoryId);
-        }, [categories]
-    );
-
-    // Fetch categories on mount
-    useEffect(() => {
-        fetchCategories();
-    }, [fetchCategories]);
+    const fetchCategoriesSummary = useCallback(async() => {
+        try {
+            const result = await categoryService.getCategoriesSummary();
+            if (result.success) {
+                return result.data;
+            }
+        } catch (err) {
+            console.error("Failed to fetch categories summary:", err);
+        }
+    }, []);
 
     return {
         categories,
         loading,
         error,
         fetchCategories,
-        getCategoryById,
-        refetchCategories: fetchCategories,
+        fetchCategoriesSummary,
     };
 };

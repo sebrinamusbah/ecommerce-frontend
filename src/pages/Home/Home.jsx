@@ -1,15 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useBooks } from "../hooks/useBooks";
+import { useCategories } from "../hooks/useCategories";
 import "./Home.css";
 
 const Home = () => {
-  const [books, setBooks] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  const API_URL = "https://readify-ecommerce-backend-1.onrender.com";
+  // Use custom hooks
+  const {
+    books,
+    featuredBooks,
+    loading: booksLoading,
+    error: booksError,
+    fetchBooks,
+    fetchFeaturedBooks,
+    searchBooks,
+  } = useBooks();
+
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    fetchCategories,
+  } = useCategories();
 
   const getCategoryColor = (index) => {
     const colors = [
@@ -36,140 +50,32 @@ const Home = () => {
 
     // If it starts with /uploads, construct full URL
     if (imagePath.startsWith("/uploads")) {
-      return `${API_URL}${imagePath}`;
+      return `${
+        process.env.REACT_APP_API_URL || "http://localhost:5001"
+      }${imagePath}`;
     }
 
     return imagePath;
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      alert(`Searching for: ${searchQuery}`);
+      await searchBooks(searchQuery);
+    } else {
+      // If search is cleared, fetch all books again
+      await fetchBooks();
     }
   };
 
-  // Fetch data from backend
+  // Fetch data from backend using hooks
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        // Fetch books with categories included
-        const booksResponse = await fetch(
-          `${API_URL}/api/books?include=category`
-        );
-        if (!booksResponse.ok) {
-          throw new Error(`HTTP error! status: ${booksResponse.status}`);
-        }
-
-        const booksData = await booksResponse.json();
-        console.log("📚 Books API Response:", booksData);
-
-        // Handle different response structures
-        let booksArray = [];
-        if (booksData.books && Array.isArray(booksData.books)) {
-          booksArray = booksData.books;
-        } else if (booksData.data && Array.isArray(booksData.data)) {
-          booksArray = booksData.data;
-        } else if (Array.isArray(booksData)) {
-          booksArray = booksData;
-        } else if (booksData && typeof booksData === "object") {
-          // If it's a single book object, wrap in array
-          booksArray = [booksData];
-        }
-
-        setBooks(booksArray);
-
-        // Fetch categories
-        try {
-          const categoriesResponse = await fetch(`${API_URL}/api/categories`);
-          if (categoriesResponse.ok) {
-            const categoriesData = await categoriesResponse.json();
-            console.log("🏷️ Categories API Response:", categoriesData);
-
-            let categoriesArray = [];
-            if (
-              categoriesData.categories &&
-              Array.isArray(categoriesData.categories)
-            ) {
-              categoriesArray = categoriesData.categories;
-            } else if (
-              categoriesData.data &&
-              Array.isArray(categoriesData.data)
-            ) {
-              categoriesArray = categoriesData.data;
-            } else if (Array.isArray(categoriesData)) {
-              categoriesArray = categoriesData;
-            }
-
-            setCategories(categoriesArray);
-          }
-        } catch (catError) {
-          console.warn(
-            "Could not fetch categories separately:",
-            catError.message
-          );
-          // We'll extract categories from books if available
-        }
-      } catch (error) {
-        console.error("❌ Error fetching books:", error);
-        setError(error.message);
-
-        // Try alternative endpoints
-        try {
-          console.log("🔄 Trying alternative endpoint...");
-          const altResponse = await fetch(`${API_URL}/books`);
-          if (altResponse.ok) {
-            const altData = await altResponse.json();
-            console.log("✅ Alternative endpoint response:", altData);
-
-            if (altData && Array.isArray(altData)) {
-              setBooks(altData);
-            }
-          }
-        } catch (altError) {
-          console.error("Alternative endpoint also failed:", altError.message);
-        }
-      } finally {
-        setIsLoading(false);
-      }
+      await Promise.all([fetchBooks(), fetchCategories()]);
     };
 
     fetchData();
-  }, []);
-
-  // Extract categories from books if not fetched separately
-  useEffect(() => {
-    if (categories.length === 0 && books.length > 0) {
-      // Extract unique categories from books
-      const uniqueCategories = [];
-      const seenCategories = new Set();
-
-      books.forEach((book) => {
-        if (
-          book.category &&
-          book.category.id &&
-          !seenCategories.has(book.category.id)
-        ) {
-          seenCategories.add(book.category.id);
-          uniqueCategories.push(book.category);
-        } else if (book.categoryId && !seenCategories.has(book.categoryId)) {
-          seenCategories.add(book.categoryId);
-          uniqueCategories.push({
-            id: book.categoryId,
-            name: `Category ${book.categoryId}`,
-          });
-        }
-      });
-
-      if (uniqueCategories.length > 0) {
-        console.log("📂 Extracted categories from books:", uniqueCategories);
-        setCategories(uniqueCategories);
-      }
-    }
-  }, [books, categories.length]);
+  }, [fetchBooks, fetchCategories]);
 
   // Process featured categories
   const featuredCategories =
@@ -179,24 +85,20 @@ const Home = () => {
           let bookCount = 0;
           if (books.length > 0) {
             bookCount = books.filter((book) => {
-              // Check different ways category might be stored
               if (book.category && book.category.id === category.id)
                 return true;
               if (book.categoryId === category.id) return true;
-              if (book.category && book.category._id === category.id)
-                return true;
-              if (book.categoryId === category._id) return true;
               return false;
             }).length;
           }
 
           return {
-            id: category.id || category._id || index + 1,
-            name: category.name || `Category ${index + 1}`,
+            id: category.id,
+            name: category.name,
             slug:
               category.slug ||
               category.name?.toLowerCase().replace(/\s+/g, "-"),
-            count: bookCount || Math.floor(Math.random() * 100) + 50,
+            count: bookCount || 0,
             color: getCategoryColor(index),
           };
         })
@@ -245,66 +147,50 @@ const Home = () => {
           },
         ];
 
-  // Process popular books - show featured books first, then others
-  const popularBooks =
-    books.length > 0
-      ? books
-          // Sort: featured first, then by rating, then by title
-          .sort((a, b) => {
-            if (a.isFeatured && !b.isFeatured) return -1;
-            if (!a.isFeatured && b.isFeatured) return 1;
-            if (a.rating !== b.rating) return b.rating - a.rating;
-            return a.title.localeCompare(b.title);
-          })
-          .slice(0, 6) // Take top 6
-          .map((book) => {
-            // Get category name
-            let categoryName = "Unknown Category";
-            if (book.category && book.category.name) {
-              categoryName = book.category.name;
-            } else if (book.categoryId && categories.length > 0) {
-              const foundCategory = categories.find(
-                (cat) =>
-                  cat.id === book.categoryId || cat._id === book.categoryId
-              );
-              if (foundCategory) {
-                categoryName = foundCategory.name;
-              }
-            }
+  // Process popular books - use featured books if available, otherwise use all books
+  const popularBooks = (featuredBooks.length > 0 ? featuredBooks : books)
+    .slice(0, 6)
+    .map((book) => {
+      let categoryName = "Unknown Category";
+      if (book.category && book.category.name) {
+        categoryName = book.category.name;
+      } else if (book.categoryId && categories.length > 0) {
+        const foundCategory = categories.find(
+          (cat) => cat.id === book.categoryId
+        );
+        if (foundCategory) {
+          categoryName = foundCategory.name;
+        }
+      }
 
-            return {
-              id:
-                book.id ||
-                book._id ||
-                `book-${book.title?.replace(/\s+/g, "-")}`,
-              title: book.title || "Untitled Book",
-              author: book.author || "Unknown Author",
-              price: book.price || 0,
-              rating: book.rating || 4.0,
-              isFeatured: book.isFeatured || false,
-              image: getBookImageUrl(book.coverImage),
-              category: categoryName,
-              description: book.description || "",
-              originalBook: book,
-            };
-          })
-      : [];
+      return {
+        id: book.id,
+        title: book.title || "Untitled Book",
+        author: book.author || "Unknown Author",
+        price: book.price || 0,
+        rating: book.rating || 4.0,
+        isFeatured: book.isFeatured || false,
+        image: getBookImageUrl(book.imageUrl || book.coverImage),
+        category: categoryName,
+        description: book.description || "",
+        originalBook: book,
+      };
+    });
 
   // Loading state
+  const isLoading = booksLoading || categoriesLoading;
+  const error = booksError || categoriesError;
+
   if (isLoading && books.length === 0) {
     return (
       <div className="home-loading">
         <div className="loading-spinner"></div>
         <p>Loading books from database...</p>
-        <p className="loading-subtext">
-          Fetching {books.length > 0 ? `${books.length} books` : "data"} from
-          backend
-        </p>
+        <p className="loading-subtext">Fetching data from backend</p>
       </div>
     );
   }
 
-  // Error state
   if (error && books.length === 0) {
     return (
       <div className="home-error">
@@ -313,11 +199,13 @@ const Home = () => {
         <p>Please check:</p>
         <ul>
           <li>Is your backend server running?</li>
-          <li>Is the API URL correct? ({API_URL})</li>
           <li>Check browser console for detailed error</li>
         </ul>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            fetchBooks();
+            fetchCategories();
+          }}
           className="btn btn-primary"
         >
           Retry Connection
@@ -402,10 +290,6 @@ const Home = () => {
               <p>
                 <strong>Category:</strong>{" "}
                 {books[0].category?.name || "No category"}
-              </p>
-              <p>
-                <strong>Image URL:</strong>{" "}
-                {books[0].coverImage?.substring(0, 50)}...
               </p>
               <p>
                 <strong>Featured Books:</strong>{" "}
@@ -621,8 +505,7 @@ const Home = () => {
                 </div>
               </div>
               <p className="db-note">
-                Your database contains {books.length} books from your seeder
-                script.
+                Your database contains {books.length} books.
                 {books.filter((b) => b.isFeatured).length > 0 &&
                   ` ${
                     books.filter((b) => b.isFeatured).length
