@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import "./Register.css";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register, error, clearError } = useAuth();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -22,12 +20,6 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
 
-  // Clear errors when component mounts
-  useEffect(() => {
-    clearError();
-    return () => clearError();
-  }, [clearError]);
-
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,7 +34,6 @@ const Register = () => {
         [name]: "",
       });
     }
-    clearError();
   };
 
   // Password strength checker
@@ -125,34 +116,32 @@ const Register = () => {
     }
 
     setIsLoading(true);
-    clearError();
 
-    try {
-      // Prepare user data for API
-      const userData = {
-        name: `${formData.firstName} ${formData.lastName}`,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-      };
+    // Simulate API call
+    setTimeout(() => {
+      console.log("Registration attempt:", {
+        ...formData,
+        password: "***", // Don't log actual password
+      });
 
-      // Call register function from AuthContext
-      const user = await register(userData);
-
-      // Show success message
+      // Simulate successful registration
       alert(
         `Welcome ${formData.firstName}! Your account has been created successfully.`
       );
 
+      // Store registration data (in real app, use context/Redux)
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userEmail", formData.email);
+      localStorage.setItem(
+        "userName",
+        `${formData.firstName} ${formData.lastName}`
+      );
+
       // Redirect to home page
       navigate("/");
-    } catch (err) {
-      // Error is already set in AuthContext, but we need to handle specific cases
-      console.error("Registration error:", err.message);
-    } finally {
+
       setIsLoading(false);
-    }
+    }, 2000);
   };
 
   // Get password strength color
@@ -236,20 +225,6 @@ const Register = () => {
               </p>
             </div>
 
-            {/* Display backend errors */}
-            {error && (
-              <div className="alert alert-error">
-                <div className="alert-icon">⚠️</div>
-                <div className="alert-content">
-                  <strong>Registration Failed</strong>
-                  <p>{error}</p>
-                </div>
-                <button className="alert-close" onClick={clearError}>
-                  ×
-                </button>
-              </div>
-            )}
-
             {/* Registration Form */}
             <form className="register-form" onSubmit={handleSubmit} noValidate>
               {/* Name Fields - Two Columns */}
@@ -265,7 +240,7 @@ const Register = () => {
                     value={formData.firstName}
                     onChange={handleChange}
                     className={`form-input ${errors.firstName ? "error" : ""}`}
-                    placeholder="Sebrina"
+                    placeholder="John"
                     disabled={isLoading}
                   />
                   {errors.firstName && (
@@ -284,7 +259,7 @@ const Register = () => {
                     value={formData.lastName}
                     onChange={handleChange}
                     className={`form-input ${errors.lastName ? "error" : ""}`}
-                    placeholder="musbah"
+                    placeholder="Doe"
                     disabled={isLoading}
                   />
                   {errors.lastName && (
@@ -305,7 +280,7 @@ const Register = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className={`form-input ${errors.email ? "error" : ""}`}
-                  placeholder="Sebrin.musbah@example.com"
+                  placeholder="john.doe@example.com"
                   disabled={isLoading}
                 />
                 {errors.email && (
@@ -323,7 +298,6 @@ const Register = () => {
                     type="button"
                     className="show-password-btn"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
                   >
                     {showPassword ? "🙈 Hide" : "👁️ Show"}
                   </button>
@@ -431,7 +405,6 @@ const Register = () => {
                     type="button"
                     className="show-password-btn"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    disabled={isLoading}
                   >
                     {showConfirmPassword ? "🙈 Hide" : "👁️ Show"}
                   </button>

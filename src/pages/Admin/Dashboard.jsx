@@ -1,136 +1,250 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { useAdmin } from "../../context/AdminContext";
-import AdminNavbar from "../../components/admin/AdminNavbar";
-import AdminSidebar from "../../components/Admin/AdminSidebar";
-import DashboardStats from "../../components/Admin/DashboardStats";
-import RecentOrders from "../../components/admin/RecentOrders";
-import UserTable from "../../components/admin/UserTable";
-import BookTable from "../../components/admin/BookTable";
-import "./Dashboard.css";
+import React from "react";
+import { Link } from "react-router-dom";
+import AdminNavbar from "../../components/Admin/AdminNavbar";
+import "./Admin.css";
 
-const AdminDashboard = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { adminStats, fetchAdminStats } = useAdmin();
+const Dashboard = () => {
+  // Sample data
+  const stats = [
+    {
+      title: "Total Sales",
+      value: "$24,580",
+      change: "+12.5%",
+      icon: "💰",
+      color: "#2ecc71",
+    },
+    {
+      title: "Total Orders",
+      value: "1,248",
+      change: "+8.2%",
+      icon: "📦",
+      color: "#3498db",
+    },
+    {
+      title: "Total Users",
+      value: "5,642",
+      change: "+5.7%",
+      icon: "👥",
+      color: "#9b59b6",
+    },
+    {
+      title: "Total Books",
+      value: "2,451",
+      change: "+3.4%",
+      icon: "📚",
+      color: "#e74c3c",
+    },
+  ];
 
-  // Redirect if not admin
-  useEffect(() => {
-    if (!user || user.role !== "admin") {
-      navigate("/login", {
-        state: { message: "Admin access required" },
-      });
-    }
-  }, [user, navigate]);
+  const recentOrders = [
+    {
+      id: "#ORD001",
+      customer: "John Doe",
+      date: "2024-01-15",
+      amount: "$45.99",
+      status: "Delivered",
+    },
+    {
+      id: "#ORD002",
+      customer: "Jane Smith",
+      date: "2024-01-14",
+      amount: "$89.50",
+      status: "Processing",
+    },
+    {
+      id: "#ORD003",
+      customer: "Bob Johnson",
+      date: "2024-01-14",
+      amount: "$32.99",
+      status: "Shipped",
+    },
+    {
+      id: "#ORD004",
+      customer: "Alice Brown",
+      date: "2024-01-13",
+      amount: "$67.25",
+      status: "Pending",
+    },
+    {
+      id: "#ORD005",
+      customer: "Charlie Wilson",
+      date: "2024-01-12",
+      amount: "$120.75",
+      status: "Delivered",
+    },
+  ];
 
-  // Refresh stats every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (user?.role === "admin") {
-        fetchAdminStats();
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [user, fetchAdminStats]);
-
-  if (!user || user.role !== "admin") {
-    return null;
-  }
+  const quickActions = [
+    {
+      title: "Add New Book",
+      icon: "➕",
+      link: "/admin/books/add",
+      color: "#3498db",
+    },
+    {
+      title: "View Orders",
+      icon: "📋",
+      link: "/admin/orders",
+      color: "#2ecc71",
+    },
+    {
+      title: "Manage Users",
+      icon: "👥",
+      link: "/admin/users",
+      color: "#9b59b6",
+    },
+    {
+      title: "Generate Report",
+      icon: "📊",
+      link: "/admin/reports",
+      color: "#e74c3c",
+    },
+  ];
 
   return (
-    <div className="admin-dashboard">
+    <div className="admin-page">
       <AdminNavbar />
 
-      <div className="admin-dashboard-layout">
-        <AdminSidebar />
+      <div className="admin-content">
+        <div className="dashboard-header">
+          <h1 className="dashboard-title">Admin Dashboard</h1>
+          <p className="dashboard-subtitle">
+            Welcome back! Here's what's happening with your store today.
+          </p>
+        </div>
 
-        <main className="admin-dashboard-main">
-          <div className="dashboard-header">
-            <div className="welcome-section">
-              <h1 className="welcome-title">
-                Welcome back, <span className="admin-name">{user.name}</span>!
-                👋
-              </h1>
-              <p className="welcome-subtitle">
-                Here's what's happening with your bookstore today.
-              </p>
-            </div>
-            <div className="dashboard-actions">
-              <button className="action-btn primary">
-                <span className="btn-icon">📊</span>
-                <span>Generate Report</span>
-              </button>
-              <button className="action-btn secondary">
-                <span className="btn-icon">➕</span>
-                <span>Add New Book</span>
-              </button>
-              <button className="action-btn outline">
-                <span className="btn-icon">🔄</span>
-                <span>Refresh Data</span>
-              </button>
-            </div>
-          </div>
-
-          <DashboardStats />
-
-          <div className="dashboard-grid">
-            <div className="grid-column">
-              <RecentOrders />
-              <div className="dashboard-card">
-                <h3 className="card-title">Top Selling Books</h3>
-                <div className="top-books-list">
-                  {[
-                    {
-                      title: "The Great Gatsby",
-                      sales: 142,
-                      revenue: "$1,842",
-                    },
-                    { title: "Atomic Habits", sales: 128, revenue: "$1,543" },
-                    { title: "Clean Code", sales: 98, revenue: "$2,876" },
-                    { title: "Sapiens", sales: 87, revenue: "$1,234" },
-                    { title: "The Lean Startup", sales: 76, revenue: "$987" },
-                  ].map((book, index) => (
-                    <div key={index} className="top-book-item">
-                      <div className="book-rank">{index + 1}</div>
-                      <div className="book-info">
-                        <div className="book-title">{book.title}</div>
-                        <div className="book-stats">
-                          <span className="book-sales">{book.sales} sales</span>
-                          <span className="book-revenue">{book.revenue}</span>
-                        </div>
-                      </div>
-                      <div className="book-trend positive">+12%</div>
-                    </div>
-                  ))}
+        {/* Stats Cards */}
+        <div className="stats-grid">
+          {stats.map((stat, index) => (
+            <div key={index} className="stat-card">
+              <div
+                className="stat-icon"
+                style={{
+                  backgroundColor: `${stat.color}20`,
+                  color: stat.color,
+                }}
+              >
+                {stat.icon}
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-title">{stat.title}</h3>
+                <div className="stat-value">{stat.value}</div>
+                <div className="stat-change">
+                  <span
+                    className={`change-indicator ${
+                      stat.change.startsWith("+") ? "positive" : "negative"
+                    }`}
+                  >
+                    {stat.change}
+                  </span>
+                  <span className="change-text"> from last month</span>
                 </div>
               </div>
             </div>
+          ))}
+        </div>
 
-            <div className="grid-column">
-              <UserTable limit={5} />
-              <BookTable limit={5} />
+        {/* Main Content Grid */}
+        <div className="dashboard-grid">
+          {/* Recent Orders */}
+          <div className="dashboard-card">
+            <div className="card-header">
+              <h3 className="card-title">Recent Orders</h3>
+              <Link to="/admin/orders" className="view-all-link">
+                View All →
+              </Link>
+            </div>
+            <div className="card-content">
+              <table className="orders-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentOrders.map((order) => (
+                    <tr key={order.id}>
+                      <td>{order.id}</td>
+                      <td>{order.customer}</td>
+                      <td>{order.date}</td>
+                      <td>{order.amount}</td>
+                      <td>
+                        <span
+                          className={`status-badge status-${order.status.toLowerCase()}`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td>
+                        <button className="action-btn view-btn">View</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-              <div className="dashboard-card">
-                <h3 className="card-title">Quick Actions</h3>
-                <div className="quick-action-grid">
-                  <button className="quick-action">
-                    <span className="action-icon">📧</span>
-                    <span className="action-text">Send Newsletter</span>
-                  </button>
-                  <button className="quick-action">
-                    <span className="action-icon">📦</span>
-                    <span className="action-text">Process Orders</span>
-                  </button>
-                  <button className="quick-action">
-                    <span className="action-icon">🔄</span>
-                    <span className="action-text">Update Inventory</span>
-                  </button>
-                  <button className="quick-action">
-                    <span className="action-icon">📊</span>
-                    <span className="action-text">View Analytics</span>
-                  </button>
+          {/* Quick Actions */}
+          <div className="dashboard-card">
+            <div className="card-header">
+              <h3 className="card-title">Quick Actions</h3>
+            </div>
+            <div className="card-content">
+              <div className="quick-actions-grid">
+                {quickActions.map((action, index) => (
+                  <Link
+                    to={action.link}
+                    key={index}
+                    className="quick-action-card"
+                  >
+                    <div
+                      className="action-icon"
+                      style={{ color: action.color }}
+                    >
+                      {action.icon}
+                    </div>
+                    <h4 className="action-title">{action.title}</h4>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Sales Chart Placeholder */}
+          <div className="dashboard-card">
+            <div className="card-header">
+              <h3 className="card-title">Sales Overview</h3>
+              <select className="time-select">
+                <option>Last 7 days</option>
+                <option>Last 30 days</option>
+                <option>Last 3 months</option>
+              </select>
+            </div>
+            <div className="card-content">
+              <div className="chart-placeholder">
+                <div className="chart-bars">
+                  {[40, 65, 80, 60, 75, 90, 70].map((height, index) => (
+                    <div
+                      key={index}
+                      className="chart-bar"
+                      style={{ height: `${height}%` }}
+                    ></div>
+                  ))}
+                </div>
+                <div className="chart-labels">
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                  <span>Sat</span>
+                  <span>Sun</span>
                 </div>
               </div>
             </div>
@@ -138,75 +252,54 @@ const AdminDashboard = () => {
 
           {/* Recent Activity */}
           <div className="dashboard-card">
-            <h3 className="card-title">Recent Activity</h3>
-            <div className="activity-timeline">
-              {[
-                {
-                  time: "10:30 AM",
-                  user: "John Doe",
-                  action: "Placed new order #ORD-2024-001",
-                  icon: "🛒",
-                },
-                {
-                  time: "09:45 AM",
-                  user: "Sarah Smith",
-                  action: 'Reviewed "The Great Gatsby"',
-                  icon: "⭐",
-                },
-                {
-                  time: "09:15 AM",
-                  user: "System",
-                  action: "Database backup completed",
-                  icon: "💾",
-                },
-                {
-                  time: "Yesterday",
-                  user: "Admin",
-                  action: "Added 5 new books to inventory",
-                  icon: "📚",
-                },
-                {
-                  time: "Yesterday",
-                  user: "Michael Brown",
-                  action: "Registered new account",
-                  icon: "👤",
-                },
-              ].map((activity, index) => (
-                <div key={index} className="activity-item">
-                  <div className="activity-time">{activity.time}</div>
-                  <div className="activity-icon">{activity.icon}</div>
+            <div className="card-header">
+              <h3 className="card-title">Recent Activity</h3>
+            </div>
+            <div className="card-content">
+              <div className="activity-list">
+                <div className="activity-item">
+                  <div className="activity-icon">📚</div>
                   <div className="activity-content">
-                    <div className="activity-user">{activity.user}</div>
-                    <div className="activity-action">{activity.action}</div>
+                    <p>
+                      <strong>New book added:</strong> "The Psychology of Money"
+                    </p>
+                    <span className="activity-time">2 hours ago</span>
                   </div>
                 </div>
-              ))}
+                <div className="activity-item">
+                  <div className="activity-icon">👤</div>
+                  <div className="activity-content">
+                    <p>
+                      <strong>New user registered:</strong> jane.doe@email.com
+                    </p>
+                    <span className="activity-time">4 hours ago</span>
+                  </div>
+                </div>
+                <div className="activity-item">
+                  <div className="activity-icon">💰</div>
+                  <div className="activity-content">
+                    <p>
+                      <strong>Order completed:</strong> #ORD006 for $67.50
+                    </p>
+                    <span className="activity-time">6 hours ago</span>
+                  </div>
+                </div>
+                <div className="activity-item">
+                  <div className="activity-icon">🔄</div>
+                  <div className="activity-content">
+                    <p>
+                      <strong>Inventory updated:</strong> 15 books restocked
+                    </p>
+                    <span className="activity-time">Yesterday</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* System Info */}
-          <div className="system-info-footer">
-            <div className="info-item">
-              <span className="info-label">Last Updated:</span>
-              <span className="info-value">
-                {new Date().toLocaleTimeString()}
-              </span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Server Status:</span>
-              <span className="info-value status-online">
-                All Systems Operational
-              </span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">API Version:</span>
-              <span className="info-value">v1.2.4</span>
-            </div>
-          </div>
-        </main>
+        </div>
       </div>
     </div>
   );
 };
 
-export default AdminDashboard;
+export default Dashboard;
