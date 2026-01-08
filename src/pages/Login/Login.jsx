@@ -81,8 +81,22 @@ const Login = () => {
     clearError();
 
     try {
-      // Login the user
-      await login(formData.email, formData.password);
+      console.log("Login Component: Starting login for:", formData.email);
+
+      // Clear any previous localStorage for fresh test
+      console.log("Before login - localStorage:", {
+        token: localStorage.getItem("token"),
+        user: localStorage.getItem("user"),
+      });
+
+      // Try to login
+      const user = await login(formData.email, formData.password);
+
+      console.log("Login Component: Got user from login():", user);
+
+      // Check localStorage after login
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      console.log("After login - localStorage user:", storedUser);
 
       // Remember me functionality
       if (rememberMe) {
@@ -91,16 +105,34 @@ const Login = () => {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // Check user role from localStorage
-      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      // Determine role from multiple sources
+      const role =
+        user?.role ||
+        storedUser?.role ||
+        user?.userRole ||
+        storedUser?.userRole;
 
-      if (userData?.role === "admin") {
+      console.log("Determined role:", role);
+
+      // Redirect based on role
+      if (role && role.toLowerCase().includes("admin")) {
+        console.log("Redirecting to admin dashboard");
         navigate("/admin/dashboard", { replace: true });
       } else {
+        console.log("Redirecting to:", from);
         navigate(from, { replace: true });
       }
     } catch (err) {
-      console.error("Login error:", err.message);
+      console.error("Login Component: Full error details:", {
+        message: err.message,
+        stack: err.stack,
+        email: formData.email,
+      });
+
+      // Show appropriate error message
+      setErrors({
+        general: err.message || "Login failed. Please check your credentials.",
+      });
     } finally {
       setIsLoading(false);
     }

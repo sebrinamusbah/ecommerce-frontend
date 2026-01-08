@@ -89,21 +89,34 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       setLoading(true);
 
+      console.log("AuthContext: Attempting login with:", email);
+
       const response = await authService.login({ email, password });
 
-      console.log("API Response:", response); // Add this for debugging
+      console.log("AuthContext: API Response:", response);
 
       // Check the correct response structure
       if (response.success && response.data?.user) {
+        console.log("AuthContext: Login successful, user:", response.data.user);
         setUser(response.data.user);
         return response.data.user; // Return the user object
+      } else if (response.success && response.data?.token) {
+        // Alternative structure: token might be separate
+        console.log("AuthContext: Alternative structure found");
+        const user = response.data.user || { email, role: "user" };
+        setUser(user);
+        return user;
       } else {
-        // If structure is different, adapt accordingly
-        console.error("Unexpected response structure:", response);
+        console.error("AuthContext: Unexpected response structure:", response);
         throw new Error(response.message || "Login failed - invalid response");
       }
     } catch (err) {
-      console.error("Login catch error:", err);
+      console.error("AuthContext: Login catch error:", {
+        message: err.message,
+        error: err.error,
+        details: err.details,
+      });
+
       const errorMessage =
         err.error ||
         err.message ||
