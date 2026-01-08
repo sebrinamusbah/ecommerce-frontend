@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useApi } from "../../hooks/useApi";
-import { useAdmin } from "../../context/AdminContext";
+
 import AdminNavbar from "../../components/Admin/AdminNavbar";
-import AdminSidebar from "../../components/Admin/AdminSidebar";
+
 //import "./ManageBooks.css";
 
 const ManageBooks = () => {
