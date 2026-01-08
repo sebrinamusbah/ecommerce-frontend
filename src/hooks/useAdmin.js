@@ -1,101 +1,40 @@
 import { useAuth } from "../context/AuthContext";
-import { useCallback } from "react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const useAdmin = () => {
-    const {
-        user,
-        isAdmin,
-        getAllUsers,
-        adminUpdateUser,
-        adminCreateBook,
-        adminUpdateBook,
-        adminDeleteBook,
-        getAdminStats,
-    } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
+  const navigate = useNavigate();
 
-    const checkAdminAccess = useCallback(() => {
-        if (!user || !isAdmin()) {
-            throw new Error("Access denied. Admin privileges required.");
-        }
-        return true;
-    }, [user, isAdmin]);
+  useEffect(() => {
+    if (!loading && !isAdmin()) {
+      console.log("User is not admin, redirecting to login");
+      navigate("/login", {
+        state: {
+          from: window.location.pathname,
+          message: "Admin access required",
+        },
+      });
+    }
+  }, [user, loading, isAdmin, navigate]);
 
-    const fetchAllUsers = useCallback(async() => {
-        checkAdminAccess();
-        try {
-            return await getAllUsers();
-        } catch (error) {
-            console.error("Failed to fetch users:", error);
-            throw error;
-        }
-    }, [checkAdminAccess, getAllUsers]);
+  return {
+    isAdmin: isAdmin(),
+    isLoading: loading,
+    user,
+  };
+};
 
-    const updateUser = useCallback(
-        async(userId, userData) => {
-            checkAdminAccess();
-            try {
-                return await adminUpdateUser(userId, userData);
-            } catch (error) {
-                console.error("Failed to update user:", error);
-                throw error;
-            }
-        }, [checkAdminAccess, adminUpdateUser]
-    );
+export const AdminRoute = ({ children }) => {
+  const { isAdmin, loading } = useAuth();
 
-    const createBook = useCallback(
-        async(bookData) => {
-            checkAdminAccess();
-            try {
-                return await adminCreateBook(bookData);
-            } catch (error) {
-                console.error("Failed to create book:", error);
-                throw error;
-            }
-        }, [checkAdminAccess, adminCreateBook]
-    );
+  if (loading) {
+    return <div> Loading... </div>;
+  }
 
-    const updateBook = useCallback(
-        async(bookId, bookData) => {
-            checkAdminAccess();
-            try {
-                return await adminUpdateBook(bookId, bookData);
-            } catch (error) {
-                console.error("Failed to update book:", error);
-                throw error;
-            }
-        }, [checkAdminAccess, adminUpdateBook]
-    );
+  if (!isAdmin()) {
+    return <div> Access Denied.Admin privileges required. </div>;
+  }
 
-    const deleteBook = useCallback(
-        async(bookId) => {
-            checkAdminAccess();
-            try {
-                return await adminDeleteBook(bookId);
-            } catch (error) {
-                console.error("Failed to delete book:", error);
-                throw error;
-            }
-        }, [checkAdminAccess, adminDeleteBook]
-    );
-
-    const fetchStats = useCallback(async() => {
-        checkAdminAccess();
-        try {
-            return await getAdminStats();
-        } catch (error) {
-            console.error("Failed to fetch admin stats:", error);
-            throw error;
-        }
-    }, [checkAdminAccess, getAdminStats]);
-
-    return {
-        isAdmin: isAdmin(),
-        checkAdminAccess,
-        fetchAllUsers,
-        updateUser,
-        createBook,
-        updateBook,
-        deleteBook,
-        fetchStats,
-    };
+  return children;
 };
