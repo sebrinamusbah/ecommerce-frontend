@@ -83,6 +83,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Login function
+  // In your AuthContext.js, update the login function:
   const login = async (email, password) => {
     try {
       setError(null);
@@ -90,16 +91,23 @@ export const AuthProvider = ({ children }) => {
 
       const response = await authService.login({ email, password });
 
+      console.log("API Response:", response); // Add this for debugging
+
+      // Check the correct response structure
       if (response.success && response.data?.user) {
         setUser(response.data.user);
-        return response.data.user;
+        return response.data.user; // Return the user object
       } else {
-        throw new Error(response.message || "Login failed");
+        // If structure is different, adapt accordingly
+        console.error("Unexpected response structure:", response);
+        throw new Error(response.message || "Login failed - invalid response");
       }
     } catch (err) {
+      console.error("Login catch error:", err);
       const errorMessage =
         err.error ||
         err.message ||
+        err.details ||
         "Login failed. Please check your credentials.";
       setError(errorMessage);
       throw new Error(errorMessage);
