@@ -20,24 +20,20 @@ export const AuthProvider = ({ children }) => {
           if (currentUser) {
             setUser(currentUser);
 
-            // Optional: Verify token by fetching fresh user data
+            // Verify token is still valid
             try {
-              const response = await authService.getProfile();
-              if (response.success && response.data.user) {
-                setUser(response.data.user);
-                localStorage.setItem(
-                  "user",
-                  JSON.stringify(response.data.user)
-                );
-              }
-            } catch (err) {
-              console.log("Could not fetch fresh profile, using cached data");
+              await authService.getProfile();
+            } catch (profileErr) {
+              console.log("Token expired, logging out");
+              authService.logout();
+              setUser(null);
             }
           }
         }
       } catch (err) {
         console.error("Auth initialization error:", err);
         authService.logout();
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -54,20 +50,22 @@ export const AuthProvider = ({ children }) => {
 
       const response = await authService.register(userData);
 
-      if (response.success && response.data?.token) {
+      if (response.success && (response.token || response.data?.token)) {
         // Auto-login after successful registration
         const loginResponse = await authService.login({
           email: userData.email,
           password: userData.password,
         });
 
-        if (loginResponse.success && loginResponse.data?.user) {
-          setUser(loginResponse.data.user);
-          return loginResponse.data.user;
+        if (loginResponse.success && loginResponse.user) {
+          const user = loginResponse.user || loginResponse.data?.user;
+          if (user) {
+            setUser(user);
+            return { success: true, user };
+          }
         }
       }
 
-      // If no auto-login, just return success
       return {
         success: true,
         message: response.message || "Registration successful",
@@ -82,45 +80,45 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login function
-  // In your AuthContext.js, update the login function:
+  // Login function - SIMPLIFIED AND FIXED
   const login = async (email, password) => {
     try {
       setError(null);
       setLoading(true);
 
-      console.log("AuthContext: Attempting login with:", email);
+      console.log("AuthContext: Attempting login for:", email);
 
       const response = await authService.login({ email, password });
 
-      console.log("AuthContext: API Response:", response);
+      console.log("AuthContext: Login response:", response);
 
-      // Check the correct response structure
-      if (response.success && response.data?.user) {
-        console.log("AuthContext: Login successful, user:", response.data.user);
-        setUser(response.data.user);
-        return response.data.user; // Return the user object
-      } else if (response.success && response.data?.token) {
-        // Alternative structure: token might be separate
-        console.log("AuthContext: Alternative structure found");
-        const user = response.data.user || { email, role: "user" };
+      // Handle different response structures
+      let user = null;
+
+      if (response.user) {
+        user = response.user;
+      } else if (response.data?.user) {
+        user = response.data.user;
+      } else if (response.success && response.data) {
+        // Try to extract user from response.data
+        user = response.data;
+      }
+
+      if (user) {
+        console.log("AuthContext: Setting user:", user);
         setUser(user);
         return user;
       } else {
-        console.error("AuthContext: Unexpected response structure:", response);
-        throw new Error(response.message || "Login failed - invalid response");
+        console.error("AuthContext: No user data in response:", response);
+        throw new Error(
+          response.message || "Login failed - no user data received"
+        );
       }
     } catch (err) {
-      console.error("AuthContext: Login catch error:", {
-        message: err.message,
-        error: err.error,
-        details: err.details,
-      });
-
+      console.error("AuthContext: Login error:", err);
       const errorMessage =
         err.error ||
         err.message ||
-        err.details ||
         "Login failed. Please check your credentials.";
       setError(errorMessage);
       throw new Error(errorMessage);
@@ -228,7 +226,19 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user has specific role
   const hasRole = (role) => {
-    return user?.role === role;
+    if (!user) return false;
+
+    // Check multiple possible role properties
+    const userRole = user.role || user.userRole || user.type || user.roleName;
+    return userRole === role;
+  };
+
+  // Check if user is admin
+  const isAdmin = () => {
+    if (!user) return false;
+
+    const userRole = user.role || user.userRole || user.type || user.roleName;
+    return userRole === "admin" || userRole === "administrator";
   };
 
   const value = {
@@ -245,6 +255,7 @@ export const AuthProvider = ({ children }) => {
     clearError,
     isAuthenticated,
     hasRole,
+    isAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
