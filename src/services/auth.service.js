@@ -9,7 +9,7 @@ const authService = {
             const response = await api.post("/auth/register", userData);
             return response.data;
         } catch (error) {
-            throw error.response ? .data || { error: "Registration failed" };
+            throw error.response ?.data || { error: "Registration failed" };
         }
     },
 
@@ -20,7 +20,7 @@ const authService = {
         try {
             const response = await api.post("/auth/login", credentials);
 
-            if (response.data ? .token || response.data ? .data ? .token) {
+            if (response.data ?.token || response.data ?.data ?.token) {
                 // Handle both response structures
                 const token = response.data.token || response.data.data.token;
                 const user = response.data.user || response.data.data.user;
@@ -31,8 +31,8 @@ const authService = {
 
             return response.data;
         } catch (error) {
-            console.error("Auth Service Login Error:", error.response ? .data || error);
-            throw error.response ? .data || {
+            console.error("Auth Service Login Error:", error.response ?.data || error);
+            throw error.response ?.data || {
                 error: "Login failed",
                 message: "Check your credentials and try again"
             };
@@ -47,7 +47,7 @@ const authService = {
             const response = await api.get("/auth/me");
             return response.data;
         } catch (error) {
-            throw error.response ? .data || { error: "Failed to fetch profile" };
+            throw error.response ?.data || { error: "Failed to fetch profile" };
         }
     },
 
@@ -58,13 +58,13 @@ const authService = {
         try {
             const response = await api.put("/auth/profile", userData);
 
-            if (response.data.success && response.data.data ? .user) {
+            if (response.data.success && response.data.data ?.user) {
                 localStorage.setItem("user", JSON.stringify(response.data.data.user));
             }
 
             return response.data;
         } catch (error) {
-            throw error.response ? .data || { error: "Failed to update profile" };
+            throw error.response ?.data || { error: "Failed to update profile" };
         }
     },
 
@@ -76,7 +76,7 @@ const authService = {
             const response = await api.put("/auth/change-password", passwordData);
             return response.data;
         } catch (error) {
-            throw error.response ? .data || { error: "Failed to change password" };
+            throw error.response ?.data || { error: "Failed to change password" };
         }
     },
 
@@ -125,7 +125,7 @@ const authService = {
             const response = await api.post("/auth/forgot-password", { email });
             return response.data;
         } catch (error) {
-            throw error.response ? .data || { error: "Failed to send reset email" };
+            throw error.response ?.data || { error: "Failed to send reset email" };
         }
     },
 
@@ -139,7 +139,7 @@ const authService = {
             });
             return response.data;
         } catch (error) {
-            throw error.response ? .data || { error: "Failed to reset password" };
+            throw error.response ?.data || { error: "Failed to reset password" };
         }
     },
 };

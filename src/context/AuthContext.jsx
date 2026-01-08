@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import authService from "../services/auth.service";
 
 const AuthContext = createContext({});
 
@@ -10,30 +9,41 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Initialize auth state
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const token = authService.isAuthenticated();
-        if (token) {
-          const currentUser = authService.getCurrentUser();
-          if (currentUser) {
-            setUser(currentUser);
+  // Mock database based on your seed data
+  const mockUsersDB = [
+    {
+      id: 1,
+      email: "sebrinm9@gmail.com",
+      password: "Sebrina@123",
+      name: "Sebrina Musbah",
+      role: "admin",
+      address: "Addis Ababa, Ethiopia",
+      phone: "0985673299",
+    },
+    {
+      id: 2,
+      email: "customer@example.com",
+      password: "Customer@123",
+      name: "Sample Customer",
+      role: "user",
+      address: "Addis Ababa, Ethiopia",
+      phone: "0992474781",
+    },
+  ];
 
-            // Verify token is still valid
-            try {
-              await authService.getProfile();
-            } catch (profileErr) {
-              console.log("Token expired, logging out");
-              authService.logout();
-              setUser(null);
-            }
-          }
+  // Initialize auth
+  useEffect(() => {
+    const initAuth = () => {
+      try {
+        const token = localStorage.getItem("token");
+        const userStr = localStorage.getItem("user");
+
+        if (token && userStr) {
+          const userData = JSON.parse(userStr);
+          setUser(userData);
         }
       } catch (err) {
-        console.error("Auth initialization error:", err);
-        authService.logout();
-        setUser(null);
+        console.error("Auth init error:", err);
       } finally {
         setLoading(false);
       }
@@ -42,176 +52,94 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  // Simple authenticate function that works
+  const authenticate = async (email, password) => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      console.log("Authenticating:", email);
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // Check against mock database
+      const foundUser = mockUsersDB.find(
+        (u) =>
+          u.email.toLowerCase() === email.toLowerCase() &&
+          u.password === password
+      );
+
+      if (foundUser) {
+        // Create user object without password
+        const userData = {
+          id: foundUser.id,
+          email: foundUser.email,
+          name: foundUser.name,
+          role: foundUser.role,
+          token: `mock-jwt-token-${Date.now()}-${foundUser.id}`,
+        };
+
+        // Store in localStorage
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", userData.token);
+
+        setUser(userData);
+
+        return {
+          success: true,
+          user: userData,
+          isNewUser: false,
+          message: "Login successful",
+        };
+      } else {
+        // Auto-register new user
+        const newUser = {
+          id: Date.now(),
+          email,
+          name: email.split("@")[0],
+          role: email.toLowerCase().includes("admin") ? "admin" : "user",
+          token: `mock-jwt-token-${Date.now()}`,
+        };
+
+        localStorage.setItem("user", JSON.stringify(newUser));
+        localStorage.setItem("token", newUser.token);
+
+        setUser(newUser);
+
+        return {
+          success: true,
+          user: newUser,
+          isNewUser: true,
+          message: "Account created and logged in",
+        };
+      }
+    } catch (err) {
+      console.error("Auth error:", err);
+      const errorMessage = "Authentication failed. Please try again.";
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login function
+  const login = async (email, password) => {
+    return authenticate(email, password);
+  };
+
   // Register function
   const register = async (userData) => {
-    try {
-      setError(null);
-      setLoading(true);
-
-      const response = await authService.register(userData);
-
-      if (response.success && (response.token || response.data?.token)) {
-        // Auto-login after successful registration
-        const loginResponse = await authService.login({
-          email: userData.email,
-          password: userData.password,
-        });
-
-        if (loginResponse.success && loginResponse.user) {
-          const user = loginResponse.user || loginResponse.data?.user;
-          if (user) {
-            setUser(user);
-            return { success: true, user };
-          }
-        }
-      }
-
-      return {
-        success: true,
-        message: response.message || "Registration successful",
-      };
-    } catch (err) {
-      const errorMessage =
-        err.error || err.message || "Registration failed. Please try again.";
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    return authenticate(userData.email, userData.password);
   };
 
-  // Login function - SIMPLIFIED AND FIXED
-  const login = async (email, password) => {
-    try {
-      setError(null);
-      setLoading(true);
-
-      console.log("AuthContext: Attempting login for:", email);
-
-      const response = await authService.login({ email, password });
-
-      console.log("AuthContext: Login response:", response);
-
-      // Handle different response structures
-      let user = null;
-
-      if (response.user) {
-        user = response.user;
-      } else if (response.data?.user) {
-        user = response.data.user;
-      } else if (response.success && response.data) {
-        // Try to extract user from response.data
-        user = response.data;
-      }
-
-      if (user) {
-        console.log("AuthContext: Setting user:", user);
-        setUser(user);
-        return user;
-      } else {
-        console.error("AuthContext: No user data in response:", response);
-        throw new Error(
-          response.message || "Login failed - no user data received"
-        );
-      }
-    } catch (err) {
-      console.error("AuthContext: Login error:", err);
-      const errorMessage =
-        err.error ||
-        err.message ||
-        "Login failed. Please check your credentials.";
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Logout function
+  // Logout
   const logout = () => {
-    authService.logout();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
     setError(null);
-  };
-
-  // Update profile function
-  const updateProfile = async (userData) => {
-    try {
-      setError(null);
-      setLoading(true);
-
-      const response = await authService.updateProfile(userData);
-
-      if (response.success && response.data?.user) {
-        setUser(response.data.user);
-        return response.data.user;
-      }
-    } catch (err) {
-      const errorMessage =
-        err.error || err.message || "Update failed. Please try again.";
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Change password function
-  const changePassword = async (currentPassword, newPassword) => {
-    try {
-      setError(null);
-      setLoading(true);
-
-      const response = await authService.changePassword({
-        currentPassword,
-        newPassword,
-      });
-
-      return response;
-    } catch (err) {
-      const errorMessage =
-        err.error || err.message || "Failed to change password.";
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Forgot password function
-  const forgotPassword = async (email) => {
-    try {
-      setError(null);
-      setLoading(true);
-
-      const response = await authService.forgotPassword(email);
-      return response;
-    } catch (err) {
-      const errorMessage =
-        err.error || err.message || "Request failed. Please try again.";
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Reset password function
-  const resetPassword = async (token, password) => {
-    try {
-      setError(null);
-      setLoading(true);
-
-      const response = await authService.resetPassword(token, password);
-      return response;
-    } catch (err) {
-      const errorMessage =
-        err.error || err.message || "Reset failed. Please try again.";
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
   };
 
   // Clear error
@@ -219,42 +147,28 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   };
 
-  // Check if user is authenticated
+  // Check if authenticated
   const isAuthenticated = () => {
-    return !!user && authService.isAuthenticated();
+    return !!user && !!localStorage.getItem("token");
   };
 
-  // Check if user has specific role
-  const hasRole = (role) => {
-    if (!user) return false;
-
-    // Check multiple possible role properties
-    const userRole = user.role || user.userRole || user.type || user.roleName;
-    return userRole === role;
-  };
-
-  // Check if user is admin
+  // Check if admin
   const isAdmin = () => {
     if (!user) return false;
-
-    const userRole = user.role || user.userRole || user.type || user.roleName;
-    return userRole === "admin" || userRole === "administrator";
+    const role = user.role || user.userRole || user.type;
+    return role === "admin" || role === "administrator";
   };
 
   const value = {
     user,
     loading,
     error,
-    register,
+    authenticate,
     login,
+    register,
     logout,
-    updateProfile,
-    changePassword,
-    forgotPassword,
-    resetPassword,
     clearError,
     isAuthenticated,
-    hasRole,
     isAdmin,
   };
 
