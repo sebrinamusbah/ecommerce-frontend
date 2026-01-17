@@ -4,6 +4,7 @@ import axios from "axios";
 const API_BASE_URL =
     import.meta.env.VITE_API_URL;
 
+// You created this as 'api' (lowercase)
 const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -12,8 +13,9 @@ const api = axios.create({
     timeout: 10000,
 });
 
-// Request interceptor
-API.interceptors.request.use((config) => {
+// ❌ WRONG: You're using 'API' but you created 'api'
+// Request interceptor - CHANGE API to api
+api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -21,8 +23,8 @@ API.interceptors.request.use((config) => {
     return config;
 });
 
-// Response interceptor
-API.interceptors.response.use(
+// Response interceptor - CHANGE API to api
+api.interceptors.response.use(
     (response) => {
         return response.data;
     },
@@ -41,48 +43,51 @@ API.interceptors.response.use(
     }
 );
 
+// CHANGE ALL 'API' to 'api' in exports:
+
 // AUTH SERVICES
-export const registerUser = (userData) => API.post('/auth/register', userData);
-export const loginUser = (credentials) => API.post('/auth/login', credentials);
-export const getProfile = () => API.get('/auth/profile');
+export const registerUser = (userData) => api.post('/auth/register', userData);
+export const loginUser = (credentials) => api.post('/auth/login', credentials);
+export const getProfile = () => api.get('/auth/profile');
 
 // BOOK SERVICES
-export const getAllBooks = (params = {}) => API.get('/books', { params });
-export const getBookById = (id) => API.get(`/books/${id}`);
-export const searchBooks = (query) => API.get(`/books/search?q=${query}`);
+export const getAllBooks = (params = {}) => api.get('/books', { params });
+export const getBookById = (id) => api.get(`/books/${id}`);
+export const searchBooks = (query) => api.get(`/books/search?q=${query}`);
 
 // CATEGORY SERVICES
-export const getAllCategories = () => API.get('/categories');
-export const getCategoryBySlug = (slug) => API.get(`/categories/${slug}`);
+export const getAllCategories = () => api.get('/categories');
+export const getCategoryBySlug = (slug) => api.get(`/categories/${slug}`);
 
 // CART SERVICES
-export const getCart = () => API.get('/cart');
+export const getCart = () => api.get('/cart');
 export const addToCart = (bookId, quantity = 1) =>
-    API.post('/cart/add', { bookId, quantity });
+    api.post('/cart/add', { bookId, quantity });
 export const updateCartItem = (cartItemId, quantity) =>
-    API.put(`/cart/${cartItemId}`, { quantity });
-export const removeFromCart = (cartItemId) => API.delete(`/cart/${cartItemId}`);
-export const clearCart = () => API.delete('/cart/clear');
+    api.put(`/cart/${cartItemId}`, { quantity });
+export const removeFromCart = (cartItemId) => api.delete(`/cart/${cartItemId}`);
+export const clearCart = () => api.delete('/cart/clear');
 
 // ORDER SERVICES
-export const createOrder = (orderData) => API.post('/orders', orderData);
-export const getOrders = () => API.get('/orders');
-export const getOrderById = (orderId) => API.get(`/orders/${orderId}`);
+export const createOrder = (orderData) => api.post('/orders', orderData);
+export const getOrders = () => api.get('/orders');
+export const getOrderById = (orderId) => api.get(`/orders/${orderId}`);
 
 // PAYMENT SERVICES
 export const createPayment = (orderId, paymentData) =>
-    API.post(`/payments/${orderId}`, paymentData);
+    api.post(`/payments/${orderId}`, paymentData);
 
 // REVIEW SERVICES
-export const getBookReviews = (bookId) => API.get(`/reviews/book/${bookId}`);
+export const getBookReviews = (bookId) => api.get(`/reviews/book/${bookId}`);
 export const addReview = (bookId, reviewData) =>
-    API.post(`/reviews/${bookId}`, reviewData);
+    api.post(`/reviews/${bookId}`, reviewData);
 
 // ADMIN SERVICES
-export const addBook = (bookData) => API.post('/admin/books', bookData);
-export const addCategory = (categoryData) => API.post('/admin/categories', categoryData);
+export const addBook = (bookData) => api.post('/admin/books', bookData);
+export const addCategory = (categoryData) => api.post('/admin/categories', categoryData);
 
 // TEST CONNECTION
-export const testConnection = () => API.get('/health');
+export const testConnection = () => api.get('/health');
 
-export default API;
+// CHANGE THIS TOO:
+export default api; // Not API
