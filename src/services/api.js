@@ -10,7 +10,7 @@ const api = axios.create({
     headers: {
         "Content-Type": "application/json",
     },
-    timeout: 10000,
+    timeout: 30000,
 });
 
 // ❌ WRONG: You're using 'API' but you created 'api'
