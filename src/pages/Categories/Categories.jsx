@@ -1,138 +1,21 @@
-import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext"; // Import AuthContext
 import "./Categories.css";
 
 const Categories = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, mockDB, getCategories, getBooks, addToCart } = useAuth();
+
   const selectedCategory = searchParams.get("category") || "all";
+  const searchQuery = searchParams.get("search") || "";
 
-  // Categories data
-  const categories = [
-    { id: 1, name: "All", count: 620, slug: "all" },
-    { id: 2, name: "Fiction", count: 150, slug: "fiction" },
-    { id: 3, name: "Non-Fiction", count: 120, slug: "non-fiction" },
-    { id: 4, name: "Science", count: 85, slug: "science" },
-    { id: 5, name: "Biography", count: 65, slug: "biography" },
-    { id: 6, name: "Technology", count: 90, slug: "technology" },
-    { id: 7, name: "Children", count: 110, slug: "children" },
-    { id: 8, name: "Romance", count: 75, slug: "romance" },
-    { id: 9, name: "Mystery", count: 60, slug: "mystery" },
-    { id: 10, name: "Fantasy", count: 95, slug: "fantasy" },
-    { id: 11, name: "History", count: 70, slug: "history" },
-    { id: 12, name: "Business", count: 55, slug: "business" },
-  ];
-
-  // Sample books data
-  const allBooks = [
-    {
-      id: 1,
-      title: "The Great Gatsby",
-      author: "F. Scott Fitzgerald",
-      price: 12.99,
-      rating: 4.5,
-      category: "fiction",
-      image: "https://via.placeholder.com/150x200/3498db/ffffff?text=Book1",
-    },
-    {
-      id: 2,
-      title: "A Brief History of Time",
-      author: "Stephen Hawking",
-      price: 15.99,
-      rating: 4.8,
-      category: "science",
-      image: "https://via.placeholder.com/150x200/2ecc71/ffffff?text=Book2",
-    },
-    {
-      id: 3,
-      title: "1984",
-      author: "George Orwell",
-      price: 10.99,
-      rating: 4.7,
-      category: "fiction",
-      image: "https://via.placeholder.com/150x200/9b59b6/ffffff?text=Book3",
-    },
-    {
-      id: 4,
-      title: "Steve Jobs",
-      author: "Walter Isaacson",
-      price: 18.99,
-      rating: 4.6,
-      category: "biography",
-      image: "https://via.placeholder.com/150x200/e74c3c/ffffff?text=Book4",
-    },
-    {
-      id: 5,
-      title: "The Hobbit",
-      author: "J.R.R. Tolkien",
-      price: 15.99,
-      rating: 4.9,
-      category: "fantasy",
-      image: "https://via.placeholder.com/150x200/f39c12/ffffff?text=Book5",
-    },
-    {
-      id: 6,
-      title: "Atomic Habits",
-      author: "James Clear",
-      price: 16.99,
-      rating: 4.8,
-      category: "non-fiction",
-      image: "https://via.placeholder.com/150x200/1abc9c/ffffff?text=Book6",
-    },
-    {
-      id: 7,
-      title: "The Cat in the Hat",
-      author: "Dr. Seuss",
-      price: 8.99,
-      rating: 4.4,
-      category: "children",
-      image: "https://via.placeholder.com/150x200/3498db/ffffff?text=Book7",
-    },
-    {
-      id: 8,
-      title: "The Lean Startup",
-      author: "Eric Ries",
-      price: 19.99,
-      rating: 4.5,
-      category: "business",
-      image: "https://via.placeholder.com/150x200/2ecc71/ffffff?text=Book8",
-    },
-    {
-      id: 9,
-      title: "Pride and Prejudice",
-      author: "Jane Austen",
-      price: 9.99,
-      rating: 4.6,
-      category: "romance",
-      image: "https://via.placeholder.com/150x200/9b59b6/ffffff?text=Book9",
-    },
-    {
-      id: 10,
-      title: "The Da Vinci Code",
-      author: "Dan Brown",
-      price: 13.99,
-      rating: 4.3,
-      category: "mystery",
-      image: "https://via.placeholder.com/150x200/e74c3c/ffffff?text=Book10",
-    },
-    {
-      id: 11,
-      title: "Sapiens",
-      author: "Yuval Noah Harari",
-      price: 17.99,
-      rating: 4.7,
-      category: "history",
-      image: "https://via.placeholder.com/150x200/f39c12/ffffff?text=Book11",
-    },
-    {
-      id: 12,
-      title: "Clean Code",
-      author: "Robert C. Martin",
-      price: 29.99,
-      rating: 4.9,
-      category: "technology",
-      image: "https://via.placeholder.com/150x200/1abc9c/ffffff?text=Book12",
-    },
-  ];
+  // Real data from mock database
+  const [categories, setCategories] = useState([]);
+  const [allBooks, setAllBooks] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState({});
 
   // State for filters
   const [priceRange, setPriceRange] = useState([0, 100]);
@@ -142,8 +25,115 @@ const Categories = () => {
     selectedCategory === "all" ? "all" : selectedCategory,
   ]);
 
-  // Filter books based on selected category and filters
+  // Load data from mock database
+  useEffect(() => {
+    const dbCategories = getCategories();
+    const dbBooks = getBooks();
+
+    // Format categories for display
+    const formattedCategories = [
+      {
+        id: 0,
+        name: "All",
+        count: dbBooks.length,
+        slug: "all",
+      },
+      ...dbCategories.map((cat, index) => ({
+        id: cat.id,
+        name: cat.name,
+        count: dbBooks.filter((book) => book.categoryId === cat.id).length,
+        slug: cat.name.toLowerCase().replace(/\s+/g, "-"),
+      })),
+    ];
+
+    // Add sample categories if none exist
+    if (dbCategories.length === 0) {
+      formattedCategories.push(
+        { id: 1, name: "Fiction", count: 150, slug: "fiction" },
+        { id: 2, name: "Non-Fiction", count: 120, slug: "non-fiction" },
+        { id: 3, name: "Science", count: 85, slug: "science" },
+        { id: 4, name: "Biography", count: 65, slug: "biography" },
+        { id: 5, name: "Technology", count: 90, slug: "technology" },
+        { id: 6, name: "Children", count: 110, slug: "children" },
+      );
+    }
+
+    setCategories(formattedCategories);
+
+    // Format books for display
+    const formattedBooks =
+      dbBooks.length > 0
+        ? dbBooks.map((book) => {
+            const category = dbCategories.find((c) => c.id === book.categoryId);
+            return {
+              id: book.id,
+              title: book.title,
+              author: book.author,
+              description: book.description,
+              price: book.price,
+              rating: 4.5, // Default rating for now
+              category: category
+                ? category.name.toLowerCase().replace(/\s+/g, "-")
+                : "uncategorized",
+              originalCategory: category?.name || "Uncategorized",
+              categoryId: book.categoryId,
+              stock: book.stock,
+              image:
+                book.imageUrl ||
+                `https://via.placeholder.com/150x200/3498db/ffffff?text=${book.title.substring(0, 5)}`,
+              isInStock: book.stock > 0,
+              createdAt: book.createdAt,
+            };
+          })
+        : getSampleBooks(); // Fallback to sample books
+
+    setAllBooks(formattedBooks);
+  }, [mockDB, getCategories, getBooks]);
+
+  // Fallback sample books if database is empty
+  const getSampleBooks = () => {
+    return [
+      {
+        id: 1,
+        title: "Sample Book 1",
+        author: "Sample Author",
+        price: 12.99,
+        rating: 4.5,
+        category: "fiction",
+        originalCategory: "Fiction",
+        stock: 15,
+        image: "https://via.placeholder.com/150x200/3498db/ffffff?text=Book1",
+        isInStock: true,
+      },
+      {
+        id: 2,
+        title: "Sample Book 2",
+        author: "Sample Author",
+        price: 15.99,
+        rating: 4.8,
+        category: "science",
+        originalCategory: "Science",
+        stock: 8,
+        image: "https://via.placeholder.com/150x200/2ecc71/ffffff?text=Book2",
+        isInStock: true,
+      },
+    ];
+  };
+
+  // Filter books based on selected category, search, and filters
   const filteredBooks = allBooks.filter((book) => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      if (
+        !book.title.toLowerCase().includes(query) &&
+        !book.author.toLowerCase().includes(query) &&
+        !book.originalCategory.toLowerCase().includes(query)
+      ) {
+        return false;
+      }
+    }
+
     // Category filter
     if (
       !selectedCategories.includes("all") &&
@@ -176,7 +166,7 @@ const Categories = () => {
         return b.rating - a.rating;
       case "newest":
       default:
-        return b.id - a.id; // Assuming higher ID = newer
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     }
   });
 
@@ -184,15 +174,26 @@ const Categories = () => {
   const handleCategoryClick = (categorySlug) => {
     if (categorySlug === "all") {
       setSelectedCategories(["all"]);
+      navigate("/categories");
     } else {
       if (selectedCategories.includes("all")) {
         setSelectedCategories([categorySlug]);
+        navigate(`/categories?category=${categorySlug}`);
       } else if (selectedCategories.includes(categorySlug)) {
+        const newCategories = selectedCategories.filter(
+          (cat) => cat !== categorySlug,
+        );
         setSelectedCategories(
-          selectedCategories.filter((cat) => cat !== categorySlug),
+          newCategories.length > 0 ? newCategories : ["all"],
+        );
+        navigate(
+          newCategories.length > 0
+            ? `/categories?category=${newCategories[0]}`
+            : "/categories",
         );
       } else {
         setSelectedCategories([...selectedCategories, categorySlug]);
+        navigate(`/categories?category=${categorySlug}`);
       }
     }
   };
@@ -209,6 +210,36 @@ const Categories = () => {
     setPriceRange([0, 100]);
     setMinRating(0);
     setSortBy("newest");
+    navigate("/categories");
+  };
+
+  // Handle add to cart
+  const handleAddToCart = async (book, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      if (
+        window.confirm(
+          "You need to login to add items to cart. Go to login page?",
+        )
+      ) {
+        navigate("/login", { state: { from: "/categories" } });
+      }
+      return;
+    }
+
+    setIsAddingToCart((prev) => ({ ...prev, [book.id]: true }));
+
+    try {
+      await addToCart(book.id, 1);
+      alert(`Added ${book.title} to cart!`);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert(`Failed to add ${book.title} to cart: ${error.message}`);
+    } finally {
+      setIsAddingToCart((prev) => ({ ...prev, [book.id]: false }));
+    }
   };
 
   return (
@@ -217,6 +248,12 @@ const Categories = () => {
       <div className="breadcrumb">
         <div className="container">
           <Link to="/">Home</Link> &gt; <span>Categories</span>
+          {selectedCategory !== "all" && (
+            <>
+              {" "}
+              &gt; <span className="current-category">{selectedCategory}</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -225,8 +262,23 @@ const Categories = () => {
         <div className="page-header">
           <h1 className="page-title">Browse Books by Category</h1>
           <p className="page-subtitle">
-            Discover {filteredBooks.length} books in our collection
+            Discover {filteredBooks.length} book
+            {filteredBooks.length !== 1 ? "s" : ""} in our collection
+            {searchQuery && (
+              <span className="search-result"> for "{searchQuery}"</span>
+            )}
           </p>
+          {allBooks.length === 0 && user?.role === "admin" && (
+            <div className="admin-prompt">
+              <p>No books found. Add some books to get started!</p>
+              <Link
+                to="/admin/manage-books?tab=books"
+                className="btn btn-primary btn-small"
+              >
+                Add Books
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="categories-layout">
@@ -292,6 +344,31 @@ const Categories = () => {
             <button className="clear-filters-btn" onClick={clearFilters}>
               Clear All Filters
             </button>
+
+            {/* Database Info (for demo) */}
+            {allBooks.length > 0 && (
+              <div className="database-info">
+                <p className="info-title">Database Info</p>
+                <div className="info-item">
+                  <span>Total Books:</span>
+                  <span>{allBooks.length}</span>
+                </div>
+                <div className="info-item">
+                  <span>Categories:</span>
+                  <span>{categories.length - 1}</span>
+                </div>
+                <div className="info-item">
+                  <span>Average Price:</span>
+                  <span>
+                    $
+                    {(
+                      allBooks.reduce((sum, book) => sum + book.price, 0) /
+                      allBooks.length
+                    ).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
           </aside>
 
           {/* Main Content - Books Grid */}
@@ -312,51 +389,79 @@ const Categories = () => {
                 </select>
               </div>
               <div className="results-count">
-                Showing {sortedBooks.length} of {allBooks.length} books
+                Showing {sortedBooks.length} of {allBooks.length} book
+                {allBooks.length !== 1 ? "s" : ""}
               </div>
             </div>
 
             {/* Books Grid */}
             {sortedBooks.length === 0 ? (
               <div className="no-results">
+                <div className="no-results-icon">🔍</div>
                 <h3>No books found</h3>
                 <p>Try adjusting your filters or select different categories</p>
                 <button className="btn btn-primary" onClick={clearFilters}>
                   Clear All Filters
                 </button>
+                {allBooks.length === 0 && user?.role === "admin" && (
+                  <Link
+                    to="/admin/manage-books?tab=books"
+                    className="btn btn-secondary"
+                    style={{ marginLeft: "10px" }}
+                  >
+                    Add Books
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="books-grid">
                 {sortedBooks.map((book) => (
-                  <Link
-                    to={`/book/${book.id}`}
-                    key={book.id}
-                    className="book-card"
-                  >
-                    <div className="book-image">
-                      <img src={book.image} alt={book.title} />
-                      <div className="book-category">{book.category}</div>
-                    </div>
-                    <div className="book-info">
-                      <h3 className="book-title">{book.title}</h3>
-                      <p className="book-author">by {book.author}</p>
-                      <div className="book-rating">
-                        {"★".repeat(Math.floor(book.rating))}
-                        {"☆".repeat(5 - Math.floor(book.rating))}
-                        <span className="rating-number">({book.rating})</span>
+                  <div key={book.id} className="book-card-wrapper">
+                    <Link to={`/book/${book.id}`} className="book-card">
+                      <div className="book-image">
+                        <img src={book.image} alt={book.title} />
+                        <div className="book-category">
+                          {book.originalCategory}
+                        </div>
+                        {!book.isInStock && (
+                          <div className="book-badge out-of-stock">
+                            Out of Stock
+                          </div>
+                        )}
+                        {book.stock < 10 && book.stock > 0 && (
+                          <div className="book-badge low-stock">Low Stock</div>
+                        )}
                       </div>
-                      <div className="book-price">${book.price.toFixed(2)}</div>
-                      <button
-                        className="add-to-cart-btn"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          alert(`Added ${book.title} to cart`);
-                        }}
-                      >
-                        Add to Cart
-                      </button>
-                    </div>
-                  </Link>
+                      <div className="book-info">
+                        <h3 className="book-title">{book.title}</h3>
+                        <p className="book-author">by {book.author}</p>
+                        <div className="book-rating">
+                          {"★".repeat(Math.floor(book.rating))}
+                          {"☆".repeat(5 - Math.floor(book.rating))}
+                          <span className="rating-number">({book.rating})</span>
+                        </div>
+                        <div className="book-price">
+                          ${book.price.toFixed(2)}
+                        </div>
+                      </div>
+                    </Link>
+                    <button
+                      className="add-to-cart-btn"
+                      onClick={(e) => handleAddToCart(book, e)}
+                      disabled={isAddingToCart[book.id] || !book.isInStock}
+                    >
+                      {isAddingToCart[book.id] ? (
+                        <>
+                          <span className="spinner-small"></span>
+                          Adding...
+                        </>
+                      ) : !book.isInStock ? (
+                        "Out of Stock"
+                      ) : (
+                        "Add to Cart"
+                      )}
+                    </button>
+                  </div>
                 ))}
               </div>
             )}

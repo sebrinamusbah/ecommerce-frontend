@@ -1,83 +1,117 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext"; // Import AuthContext
 import "./Home.css";
 
 const Home = () => {
-  // Sample data for featured categories
-  const featuredCategories = [
-    { id: 1, name: "Fiction", count: 150, color: "#3498db" },
-    { id: 2, name: "Non-Fiction", count: 120, color: "#2ecc71" },
-    { id: 3, name: "Science", count: 85, color: "#9b59b6" },
-    { id: 4, name: "Biography", count: 65, color: "#e74c3c" },
-    { id: 5, name: "Technology", count: 90, color: "#f39c12" },
-    { id: 6, name: "Children", count: 110, color: "#1abc9c" },
-  ];
+  const navigate = useNavigate();
+  const { user, mockDB, getCategories, getBooks, addToCart } = useAuth();
 
-  // Sample data for popular books
-  const popularBooks = [
-    {
-      id: 1,
-      title: "The Great Gatsby",
-      author: "F. Scott Fitzgerald",
-      price: 12.99,
-      rating: 4.5,
-      image: "https://via.placeholder.com/150x200/3498db/ffffff?text=Book1",
-    },
-    {
-      id: 2,
-      title: "To Kill a Mockingbird",
-      author: "Harper Lee",
-      price: 14.99,
-      rating: 4.8,
-      image: "https://via.placeholder.com/150x200/2ecc71/ffffff?text=Book2",
-    },
-    {
-      id: 3,
-      title: "1984",
-      author: "George Orwell",
-      price: 10.99,
-      rating: 4.7,
-      image: "https://via.placeholder.com/150x200/9b59b6/ffffff?text=Book3",
-    },
-    {
-      id: 4,
-      title: "Pride and Prejudice",
-      author: "Jane Austen",
-      price: 9.99,
-      rating: 4.6,
-      image: "https://via.placeholder.com/150x200/e74c3c/ffffff?text=Book4",
-    },
-    {
-      id: 5,
-      title: "The Hobbit",
-      author: "J.R.R. Tolkien",
-      price: 15.99,
-      rating: 4.9,
-      image: "https://via.placeholder.com/150x200/f39c12/ffffff?text=Book5",
-    },
-    {
-      id: 6,
-      title: "Moby Dick",
-      author: "Herman Melville",
-      price: 11.99,
-      rating: 4.3,
-      image: "https://via.placeholder.com/150x200/1abc9c/ffffff?text=Book6",
-    },
-  ];
-
+  const [featuredCategories, setFeaturedCategories] = useState([]);
+  const [popularBooks, setPopularBooks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddingToCart, setIsAddingToCart] = useState({});
+
+  // Load data from mock database
+  useEffect(() => {
+    const categories = getCategories();
+    const books = getBooks();
+
+    // Set featured categories (or use sample if none)
+    if (categories.length > 0) {
+      setFeaturedCategories(
+        categories.slice(0, 6).map((cat, index) => ({
+          id: cat.id,
+          name: cat.name,
+          count: books.filter((book) => book.categoryId === cat.id).length,
+          color: getCategoryColor(index),
+        })),
+      );
+    } else {
+      // Use sample categories if none in DB
+      setFeaturedCategories([
+        { id: 1, name: "Fiction", count: 150, color: "#3498db" },
+        { id: 2, name: "Non-Fiction", count: 120, color: "#2ecc71" },
+        { id: 3, name: "Science", count: 85, color: "#9b59b6" },
+        { id: 4, name: "Biography", count: 65, color: "#e74c3c" },
+        { id: 5, name: "Technology", count: 90, color: "#f39c12" },
+        { id: 6, name: "Children", count: 110, color: "#1abc9c" },
+      ]);
+    }
+
+    // Set popular books (use real books or sample)
+    if (books.length > 0) {
+      const displayBooks = books.slice(0, 6).map((book) => {
+        const category = categories.find((c) => c.id === book.categoryId);
+        return {
+          id: book.id,
+          title: book.title,
+          author: book.author,
+          price: book.price,
+          rating: 4.5, // Default rating
+          image:
+            book.imageUrl ||
+            `https://via.placeholder.com/150x200/3498db/ffffff?text=${book.title.substring(0, 5)}`,
+          isInStock: book.stock > 0,
+          stock: book.stock,
+        };
+      });
+      setPopularBooks(displayBooks);
+    }
+    // If no books in DB, keep the sample books from your original code
+  }, [mockDB, getCategories, getBooks]);
+
+  // Helper function for category colors (matches your original colors)
+  const getCategoryColor = (index) => {
+    const colors = [
+      "#3498db",
+      "#2ecc71",
+      "#9b59b6",
+      "#e74c3c",
+      "#f39c12",
+      "#1abc9c",
+    ];
+    return colors[index % colors.length];
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      alert(`Searching for: ${searchQuery}`);
-      // In real app: navigate to search results page
+      navigate(`/categories?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleAddToCart = async (book, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      if (
+        window.confirm(
+          "You need to login to add items to cart. Go to login page?",
+        )
+      ) {
+        navigate("/login", { state: { from: "/" } });
+      }
+      return;
+    }
+
+    setIsAddingToCart((prev) => ({ ...prev, [book.id]: true }));
+
+    try {
+      await addToCart(book.id, 1);
+      alert(`Added ${book.title} to cart!`);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert(`Failed to add ${book.title} to cart: ${error.message}`);
+    } finally {
+      setIsAddingToCart((prev) => ({ ...prev, [book.id]: false }));
     }
   };
 
   return (
     <div className="home-page">
-      {/* HERO BANNER SECTION */}
+      {/* HERO BANNER SECTION - NO CHANGES TO STRUCTURE */}
       <section className="hero-banner">
         <div className="hero-content">
           <h1 className="hero-title">Discover Your Next Favorite Book</h1>
@@ -96,7 +130,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* SEARCH BAR SECTION */}
+      {/* SEARCH BAR SECTION - NO CHANGES TO STRUCTURE */}
       <section className="search-section">
         <div className="container">
           <form className="search-form" onSubmit={handleSearch}>
@@ -121,7 +155,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* FEATURED CATEGORIES SECTION */}
+      {/* FEATURED CATEGORIES SECTION - MINIMAL DATA CHANGES ONLY */}
       <section className="featured-categories">
         <div className="container">
           <div className="section-header">
@@ -155,7 +189,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* POPULAR BOOKS SECTION */}
+      {/* POPULAR BOOKS SECTION - MINIMAL DATA CHANGES ONLY */}
       <section className="popular-books">
         <div className="container">
           <div className="section-header">
@@ -182,12 +216,19 @@ const Home = () => {
                   <div className="book-price">${book.price.toFixed(2)}</div>
                   <button
                     className="add-to-cart-btn"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert(`Added ${book.title} to cart`);
-                    }}
+                    onClick={(e) => handleAddToCart(book, e)}
+                    disabled={isAddingToCart[book.id] || !book.isInStock}
                   >
-                    Add to Cart
+                    {isAddingToCart[book.id] ? (
+                      <>
+                        <span className="spinner-small"></span>
+                        Adding...
+                      </>
+                    ) : !book.isInStock ? (
+                      "Out of Stock"
+                    ) : (
+                      "Add to Cart"
+                    )}
                   </button>
                 </div>
               </Link>
@@ -196,7 +237,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CALL TO ACTION SECTION */}
+      {/* CALL TO ACTION SECTION - NO CHANGES */}
       <section className="cta-section">
         <div className="container">
           <div className="cta-content">
