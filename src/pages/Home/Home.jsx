@@ -48,47 +48,132 @@ const Home = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Fetch books and categories from backend
-      await fetchBooks();
-      await fetchCategories();
+      // Try to fetch from real backend with a timeout
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Backend timeout")), 5000)
+      );
 
-      // Give time for state to update
-      setTimeout(() => {
-        // Set featured categories (first 6 categories)
-        if (categories && categories.length > 0) {
-          const featured = categories.slice(0, 6).map((cat, index) => ({
-            id: cat.id,
-            name: cat.name,
-            count: cat.bookCount || Math.floor(Math.random() * 100) + 50,
-            color: getCategoryColor(index),
-            slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-"),
-          }));
-          setFeaturedCategories(featured);
-        }
+      try {
+        // Race between API call and timeout
+        await Promise.race([
+          Promise.all([fetchBooks(), fetchCategories()]),
+          timeoutPromise,
+        ]);
 
-        // Set popular books (first 6 books from API)
-        if (books && books.length > 0) {
-          const popular = books.slice(0, 6).map((book) => ({
-            id: book.id,
-            title: book.title || "Unknown Title",
-            author: book.author || "Unknown Author",
-            price: book.price || 0,
-            rating: book.averageRating || 4.5,
-            image:
-              book.imageUrl ||
-              `https://via.placeholder.com/150x200/3498db/ffffff?text=${(
-                book.title || "Book"
-              ).substring(0, 10)}`,
-          }));
-          setPopularBooks(popular);
-        }
-
+        // Give time for state to update
+        setTimeout(() => {
+          updateUIFromState();
+          setIsLoading(false);
+        }, 100);
+      } catch (apiError) {
+        console.warn(
+          "Backend not responding, using fallback data:",
+          apiError.message
+        );
+        loadFallbackData();
         setIsLoading(false);
-      }, 100);
+      }
     } catch (error) {
       console.error("Failed to load homepage data:", error);
+      loadFallbackData();
       setIsLoading(false);
     }
+  };
+
+  const updateUIFromState = () => {
+    // Set featured categories (first 6 categories)
+    if (categories && categories.length > 0) {
+      const featured = categories.slice(0, 6).map((cat, index) => ({
+        id: cat.id,
+        name: cat.name,
+        count: cat.bookCount || Math.floor(Math.random() * 100) + 50,
+        color: getCategoryColor(index),
+        slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-"),
+      }));
+      setFeaturedCategories(featured);
+    }
+
+    // Set popular books (first 6 books from API)
+    if (books && books.length > 0) {
+      const popular = books.slice(0, 6).map((book) => ({
+        id: book.id,
+        title: book.title || "Unknown Title",
+        author: book.author || "Unknown Author",
+        price: book.price || 0,
+        rating: book.averageRating || 4.5,
+        image:
+          book.imageUrl ||
+          `https://via.placeholder.com/150x200/3498db/ffffff?text=${(
+            book.title || "Book"
+          ).substring(0, 10)}`,
+      }));
+      setPopularBooks(popular);
+    } else {
+      // If no books, show empty state
+      setPopularBooks([]);
+    }
+  };
+
+  const loadFallbackData = () => {
+    console.log("🔄 Loading fallback data...");
+
+    // Fallback categories
+    const fallbackCategories = [
+      { id: 1, name: "Fiction", slug: "fiction", bookCount: 156 },
+      { id: 2, name: "Non-Fiction", slug: "non-fiction", bookCount: 89 },
+      { id: 3, name: "Science", slug: "science", bookCount: 67 },
+      { id: 4, name: "Biography", slug: "biography", bookCount: 45 },
+      { id: 5, name: "Technology", slug: "technology", bookCount: 92 },
+      { id: 6, name: "Children", slug: "children", bookCount: 120 },
+    ];
+
+    // Fallback books
+    const fallbackBooks = [
+      {
+        id: 1,
+        title: "The Great Gatsby",
+        author: "F. Scott Fitzgerald",
+        price: 12.99,
+        rating: 4.5,
+        imageUrl:
+          "https://via.placeholder.com/150x200/3498db/ffffff?text=Gatsby",
+        categoryId: 1,
+      },
+      {
+        id: 2,
+        title: "To Kill a Mockingbird",
+        author: "Harper Lee",
+        price: 14.99,
+        rating: 4.8,
+        imageUrl:
+          "https://via.placeholder.com/150x200/2ecc71/ffffff?text=Mockingbird",
+        categoryId: 1,
+      },
+      {
+        id: 3,
+        title: "1984",
+        author: "George Orwell",
+        price: 10.99,
+        rating: 4.7,
+        imageUrl: "https://via.placeholder.com/150x200/9b59b6/ffffff?text=1984",
+        categoryId: 3,
+      },
+    ];
+
+    // Update state
+    setCategories(fallbackCategories);
+    setBooks(fallbackBooks);
+
+    // Set featured categories
+    const featured = fallbackCategories.slice(0, 6).map((cat, index) => ({
+      ...cat,
+      count: cat.bookCount,
+      color: getCategoryColor(index),
+    }));
+    setFeaturedCategories(featured);
+
+    // Set popular books
+    setPopularBooks(fallbackBooks);
   };
 
   const getCategoryColor = (index) => {
@@ -109,7 +194,8 @@ const Home = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/books?search=${encodeURIComponent(searchQuery)}`);
+      // Change from /books to /categories
+      navigate(`/categories?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -162,7 +248,7 @@ const Home = () => {
               : "Discover Your Next Favorite Book"}
           </p>
           <div className="hero-cta">
-            <Link to="/books" className="btn btn-primary">
+            <Link to="/categories" className="btn btn-primary">
               Browse All Books
             </Link>
             {user ? (
@@ -256,14 +342,14 @@ const Home = () => {
         <div className="container">
           <div className="section-header">
             <h2 className="section-title">Popular Books</h2>
-            <Link to="/books" className="view-all">
+            <Link to="/categories" className="view-all">
               View All Books →
             </Link>
           </div>
           {popularBooks.length === 0 && !isLoading ? (
             <div className="no-books-message">
               <p>No books available. Check back soon!</p>
-              <Link to="/books" className="btn btn-primary">
+              <Link to="/categories" className="btn btn-primary">
                 Browse All Books
               </Link>
             </div>
@@ -351,7 +437,7 @@ const Home = () => {
                 : "Join thousands of readers who discovered their next favorite book with us."}
             </p>
             <div className="cta-buttons">
-              <Link to="/books" className="btn btn-primary btn-large">
+              <Link to="/categories" className="btn btn-primary btn-large">
                 Browse All Books
               </Link>
               {user ? (
@@ -374,7 +460,22 @@ const Home = () => {
           <p>{error}</p>
           <button onClick={() => loadData()}>Retry</button>
         </div>
-      )}
+        
+        {/* Backend status indicator */}
+<div className="backend-status" style={{
+  position: 'fixed',
+  top: '10px',
+  right: '10px',
+  background: books.length > 0 ? '#2ecc71' : '#e74c3c',
+  color: 'white',
+  padding: '5px 10px',
+  borderRadius: '4px',
+  fontSize: '12px',
+  zIndex: 1000
+}}>
+  {books.length > 0 ? '✅ Backend Connected' : '❌ Backend Offline'}
+</div>
+         
       {/* Temporary debug button - remove after testing */}
       <button
         style={{
@@ -387,17 +488,30 @@ const Home = () => {
           borderRadius: "5px",
           zIndex: 1000,
         }}
-        onClick={() => {
-          console.log("Current state:");
+        onClick={async () => {
+          console.log("=== DEBUG INFO ===");
           console.log("Books:", books);
           console.log("Categories:", categories);
           console.log("User:", user);
           console.log("Cart:", cart);
           console.log("Popular Books:", popularBooks);
           console.log("Featured Categories:", featuredCategories);
+          console.log("API URL:", import.meta.env.VITE_API_URL);
+
+          // Test backend directly
+          console.log("Testing backend...");
+          try {
+            const response = await fetch(
+              "https://readify-ecommerce-backend-1.onrender.com/api/health"
+            );
+            const data = await response.json();
+            console.log("Backend health:", data);
+          } catch (err) {
+            console.error("Backend test failed:", err);
+          }
         }}
       >
-        Debug State
+        🐛 Debug
       </button>
     </div>
   );
